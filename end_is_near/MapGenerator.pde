@@ -162,57 +162,61 @@ public class MapGenerator {
     }
 
     //Generate special rooms
-    for (int i = 0; i < specialRoomTemplates.length; i++) {
-      int room = i;
-      int x, y;
+    if (roomNum > 0) {
+      for (int i = 0; i < specialRoomTemplates.length; i++) {
+        int room = i;
+        int x, y;
 
-      if (room == 0) {
-        x = startX;
-        y = startY;
-      } else {
+        if (room == 0) {
+          x = startX;
+          y = startY;
+        } else {
+          do {
+            x = int(random(1, mapWidth-specialRoomTemplates[room].length));
+            y = int(random(1, mapHeight-specialRoomTemplates[room][0].length));
+          } while (overlapsOldRoom(x, y, specialRoomTemplates[room].length, specialRoomTemplates[room][0].length));
+        }
+
+        rooms.add(new int[] {x, y, x+specialRoomTemplates[room].length, y+specialRoomTemplates[room][0].length});
+
+        for (int j = x; j < x+specialRoomTemplates[room].length; j++) {
+          for (int k = y; k < y+specialRoomTemplates[room][0].length; k++) {
+            if(specialRoomTemplates[room][j-x][k-y] == 6) {
+              map[j][k] = 0;
+              npcs.add(new NPC(true, j, k));
+            } else if (specialRoomTemplates[room][j-x][k-y] == 7) {
+              map[j][k] = 0;
+              itemList.add(new Pickup(j, k, 0));
+            } else map[j][k] = specialRoomTemplates[room][j-x][k-y];
+            if (map[j][k] == 8) {
+              itemList.add(new Pickup(j, k+1, -1));
+            }
+          }
+        }
+      }
+
+      //Generate rooms
+      for (int i = 0; i < roomNum; i++) {
+        int room = int(random(0, roomTemplates.length));
+        int x, y;
+
         do {
-          x = int(random(1, mapWidth-specialRoomTemplates[room].length));
-          y = int(random(1, mapHeight-specialRoomTemplates[room][0].length));
-        } while (overlapsOldRoom(x, y, specialRoomTemplates[room].length, specialRoomTemplates[room][0].length));
-      }
+          x = int(random(1, mapWidth-roomTemplates[room].length));
+          y = int(random(1, mapHeight-roomTemplates[room][0].length));
+        } while (overlapsOldRoom(x, y, roomTemplates[room].length, roomTemplates[room][0].length));
 
-      rooms.add(new int[] {x, y, x+specialRoomTemplates[room].length, y+specialRoomTemplates[room][0].length});
+        rooms.add(new int[] {x, y, x+roomTemplates[room].length, y+roomTemplates[room][0].length});
 
-      for (int j = x; j < x+specialRoomTemplates[room].length; j++) {
-        for (int k = y; k < y+specialRoomTemplates[room][0].length; k++) {
-          if(specialRoomTemplates[room][j-x][k-y] == 6) {
-            map[j][k] = 0;
-            npcs.add(new NPC(true, j, k));
-          } else if (specialRoomTemplates[room][j-x][k-y] == 7) {
-            map[j][k] = 0;
-            itemList.add(new Pickup(j, k, 0));
-          } else map[j][k] = specialRoomTemplates[room][j-x][k-y];
+        for (int j = x; j < x+roomTemplates[room].length; j++) {
+          for (int k = y; k < y+roomTemplates[room][0].length; k++) {
+            if(roomTemplates[room][j-x][k-y] == 6) {
+              map[j][k] = 0;
+              npcs.add(new NPC(true, j, k));
+            } else map[j][k] = roomTemplates[room][j-x][k-y];
+          }
         }
       }
     }
-
-    //Generate rooms
-    for (int i = 0; i < roomNum; i++) {
-      int room = int(random(0, roomTemplates.length));
-      int x, y;
-
-      do {
-        x = int(random(1, mapWidth-roomTemplates[room].length));
-        y = int(random(1, mapHeight-roomTemplates[room][0].length));
-      } while (overlapsOldRoom(x, y, roomTemplates[room].length, roomTemplates[room][0].length));
-
-      rooms.add(new int[] {x, y, x+roomTemplates[room].length, y+roomTemplates[room][0].length});
-
-      for (int j = x; j < x+roomTemplates[room].length; j++) {
-        for (int k = y; k < y+roomTemplates[room][0].length; k++) {
-          if(roomTemplates[room][j-x][k-y] == 6) {
-            map[j][k] = 0;
-            npcs.add(new NPC(true, j, k));
-          } else map[j][k] = roomTemplates[room][j-x][k-y];
-        }
-      }
-    }
-
     return map;
   }
 
