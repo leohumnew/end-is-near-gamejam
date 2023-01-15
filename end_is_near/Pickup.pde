@@ -18,7 +18,7 @@ public class Pickup {
         inventory[0] = 0;
         itemList.remove(this);
       } else {
-        teleport(-1);
+        teleport(4);
       }
     }
   }

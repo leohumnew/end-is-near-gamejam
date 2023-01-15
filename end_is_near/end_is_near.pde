@@ -12,10 +12,10 @@ int map[][] = new int[mapWidth][mapHeight];
 MapGenerator mapGenerator = new MapGenerator();
 int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
-int visTilesX, visTilesY;
+int visTilesX, visTilesY, level = 0;
 
 //Images
-PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, door, doorOpen, ship;
+PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, door, doorOpen, ship, menu;
 PImage[] player = new PImage[3];
 PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
@@ -35,6 +35,8 @@ boolean countDownActive = false;
 int ending = -1;
 int[] inventory = {-1};
 
+String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know.\""};
+
 //Objects
 ArrayList<NPC> npcList;
 ArrayList<Bullet> bulletList = new ArrayList<Bullet>();
@@ -52,15 +54,16 @@ void setup() {
   ((PGraphicsOpenGL)g).textureSampling(2);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-  map = mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5);
-  for (int i = 0; i < textureTiles.length; i++) {
-    textureTiles[i] = int(random(0, mapWidth*mapHeight));
-  }
-  npcList = mapGenerator.getNPCs();
+  teleport(1);
   
   pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
   textFont(pixelatedFont);
   //load images
+  menu = loadImage("C1.png");
+  thread("load");
+}
+
+void load() {
   ground[0] = loadImage("Suelo0_0.png");
   ground[1] = loadImage("Suelo0_1.png");
   ground[2] = loadImage("Suelo0_2.png");
@@ -84,13 +87,10 @@ void setup() {
   items[0] = loadImage("Key.png");
   vignette = loadImage("Vig.png");
   door = loadImage("Pared0_EN.png");
-  thread("load");
-}
-
-void load() {
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
+  level = 1;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
   doorOpen = loadImage("Pared0_3.png");
@@ -100,12 +100,12 @@ void load() {
 }
 
 void draw() {
-  if (ending == -1) {
+  if (ending == -1 && level > 0) {
     background(#08141E);
-    if (mousePressed && mouseButton == RIGHT && millis()-delayInt > 80) {
+    if (level < 4 && ((mousePressed && mouseButton == RIGHT) || (keyPressed && key == 'e')) && millis()-delayInt > 80) {
       dig();
       delayInt = millis();
-    }
+    } else if (level == 4 && millis()-delayInt > 2000) ending = 2;
     drawMap();
     move();
     for (int i = 0; i < itemList.size(); i++) {
@@ -120,21 +120,13 @@ void draw() {
     drawPlayer();
     image(vignette, 0, 0, width, height);
     drawUI();
+  } else if (level <= 0) {
+    image(menu, 0, 0, width, height);
   } else {
     image(endScreens[ending], 0, 0, width, height);
     textSize(50);
     textAlign(CENTER);
-    switch (ending) {
-      case 0:
-        text("\"And thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", width/10, height-20, width/10*8, -height/5);
-      break;
-      case 1:
-        text("\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", width/10, height-20, width/10*8, -height/5);
-      break;
-      case 2:
-        text("\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know.\"", width/10, height-20, width/10*8, -height/5);
-      break;
-    }
+    text(endText[ending], width/10, height-20, width/10*8, -height/5);
   }
 }
 
@@ -179,9 +171,6 @@ void keyPressed() {
     speedX = -0.1;
   } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
     speedX = 0.1;
-  // dig
-  } else if (key == 'e') {
-    dig();
   }
 }
 void keyReleased() {
@@ -290,8 +279,8 @@ void drawMap() {
       } else if (currentTile == 1 && (contains(textureTiles, i*j) || contains(textureTiles, int(i*j/2)))) {
         image(bg[floor(posSeed(2, i*j))], tilePosX, tilePosY, tileSize, tileSize);
       } else if (currentTile == 9) {
-        tilePosX = (i-6)*tileSize-posX*tileSize+width/2;
-        tilePosY = (j-9)*tileSize-posY*tileSize+height/2;
+        tilePosX = (i-5)*tileSize-posX*tileSize+width/2;
+        tilePosY = (j-8)*tileSize-posY*tileSize+height/2;
         image(ship, tilePosX, tilePosY, tileSize*6, tileSize*9);
       }
       
@@ -318,7 +307,7 @@ void drawUI() {
   if (countDownActive) rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), int(0-map(millis(), time+timeLimit, time, 0, height/5*3)+4));
   else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
   fill(255,0,0);
-  rect(width/4, height/20, map(health,0,100,0,width/2), height/30);
+  rect(width/4, height/25, map(health,0,100,0,width/2), height/30);
   fill(255);
 
   //Inventory
@@ -330,15 +319,23 @@ void drawUI() {
 }
 
 //LEVELS
+//0 = menu, 1 = main floor, 2 = second floor, 3 = third floor, 4 = spaceship
 void teleport(int num) {
   switch (num) {
-    case -1 :
+    case 1:
+      map = mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0);
+      for (int i = 0; i < textureTiles.length; i++) {
+        textureTiles[i] = int(random(0, mapWidth*mapHeight));
+      }
+      npcList = mapGenerator.getNPCs();
+    break;
+    case 4:
       map = new int[30][20];
       posX = 15;
       posY = 10;
-      map[18][15] = 9;
-      mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2);
-      npcList = mapGenerator.getNPCs();
+      map = mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1);
+      countDownActive = false;
+      delayInt = millis();
     break;	
   }
 }

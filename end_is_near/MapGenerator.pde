@@ -137,6 +137,16 @@ public class MapGenerator {
       {2,0,0,0},
       {8,0,0,0},
       {2,0,0,0}
+    },
+    {
+      {2,0,0,0,0,0,0,0,0,0,0,0,0},
+      {2,0,0,1,1,1,1,1,1,1,1,0,0},
+      {2,0,1,1,0,0,0,0,0,0,0,0,0},
+      {2,0,1,0,0,0,0,0,0,0,0,0,0},
+      {2,0,1,0,0,0,0,0,0,0,0,0,0},
+      {2,0,1,1,0,0,0,0,0,0,0,0,0},
+      {2,0,0,1,1,1,1,1,1,1,9,0,0},
+      {2,0,0,0,0,0,0,0,0,0,0,0,0},
     }
   };
 
@@ -149,7 +159,7 @@ public class MapGenerator {
     return false;
   };
 
-  int[][] mapGenerate(int roomNum, int mapWidth, int mapHeight, int startX, int startY) {
+  int[][] mapGenerate(int roomNum, int mapWidth, int mapHeight, int startX, int startY, int mapType) { //Map type 0 = normal, 1 = spaceship
     rooms.clear();
     npcs.clear();
     map = new int[mapWidth][mapHeight];
@@ -162,8 +172,8 @@ public class MapGenerator {
     }
 
     //Generate special rooms
-    if (roomNum > 0) {
-      for (int i = 0; i < specialRoomTemplates.length; i++) {
+    if (mapType == 0) {
+      for (int i = 0; i < specialRoomTemplates.length-1; i++) {
         int room = i;
         int x, y;
 
@@ -214,6 +224,12 @@ public class MapGenerator {
               npcs.add(new NPC(true, j, k));
             } else map[j][k] = roomTemplates[room][j-x][k-y];
           }
+        }
+      }
+    } else if (mapType == 1) {
+      for (int j = 11; j < 11+specialRoomTemplates[specialRoomTemplates.length-1].length; j++) {
+        for (int k = 3; k < 3+specialRoomTemplates[specialRoomTemplates.length-1][0].length; k++) {
+          map[j][k] = specialRoomTemplates[specialRoomTemplates.length-1][j-11][k-3];
         }
       }
     }
