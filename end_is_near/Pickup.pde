@@ -13,9 +13,9 @@ public class Pickup {
     }
 
     void checkPickup() {
-        if (dist(x, y, posX, posY) < 0.5) {
-            inventory[0] = 1;
-            itemList.remove(self);
+        if (dist(x, y, posX, posY) < 0.8) {
+            inventory[0] = 0;
+            itemList.remove(this);
         }
     }
 }

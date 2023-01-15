@@ -31,7 +31,7 @@ float posX = int(random(4,mapWidth-5))-0.5, posY = int(random(5,mapHeight-6))-0.
 int time, timeLimit = 60000, health = 100, delayInt;
 boolean countDownActive = false;
 int ending = -1;
-int[] inventory = {0};
+int[] inventory = {-1};
 
 //Objects
 ArrayList<NPC> npcList;
@@ -287,6 +287,13 @@ void drawUI() {
   fill(255,0,0);
   rect(width/4, height/20, map(health,0,100,0,width/2), height/30);
   fill(255);
+
+  //Inventory
+  for (int i = 0; i < inventory.length; i++) {
+    if (inventory[i] != -1) {
+      image(items[i], width/20+tileSize*2*i, height-tileSize*2, tileSize*2, tileSize*2);
+    }
+  }
 }
 
 //SAVE INFO -------------------------
