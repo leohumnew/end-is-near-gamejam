@@ -21,11 +21,15 @@ PImage[] wall = new PImage[3];
 PImage[] topWallSide = new PImage[2];
 PImage[] npcMeelee = new PImage[2];
 PImage[] bg = new PImage[2];
+PImage[] endScreens = new PImage[2];
+
+PFont pixelatedFont;
 
 //Player variables
 float posX = int(random(4,mapWidth-5))-0.5, posY = int(random(5,mapHeight-6))-0.5, speedX = 0, speedY = 0;
 int time, timeLimit = 60000, health = 100;
 boolean countDownActive = false;
+int ending = -1;
 
 //NPCs
 ArrayList<NPC> npcList;
@@ -47,7 +51,9 @@ void setup() {
     textureTiles[i] = int(random(0, mapWidth*mapHeight));
   }
   npcList = mapGenerator.getNPCs();
-
+  
+  pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
+  textFont(pixelatedFont);
   //load images
   ground[0] = loadImage("Suelo0_0.png");
   ground[1] = loadImage("Suelo0_1.png");
@@ -68,17 +74,33 @@ void setup() {
   npcMeelee[1] = loadImage("Char8.png");
   bg[0] = loadImage("BG0.png");
   bg[1] = loadImage("BG1.png");
+  endScreens[0] = loadImage("D0.png");
+  endScreens[1] = loadImage("D1.png");
 }
 
 void draw() {
-  background(0);
-  drawMap();
-  move();
-  for (int i = 0; i < npcList.size(); i++) {
-    npcList.get(i).drawNPC();
+  if (ending == -1) {
+    background(0);
+    drawMap();
+    move();
+    for (int i = 0; i < npcList.size(); i++) {
+      npcList.get(i).drawNPC();
+    }
+    drawPlayer();
+    drawUI();
+  } else {
+    image(endScreens[ending], 0, 0, width, height);
+    textSize(50);
+    textAlign(CENTER);
+    switch (ending) {
+      case 0:
+        text("\"And thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", width/10, height-20, width/10*8, -height/5);
+      break;
+      case 1:
+        text("\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", width/10, height-20, width/10*8, -height/5);
+      break;
+    }
   }
-  drawPlayer();
-  drawUI();
 }
 
 //MAP FUNCTIONS ------------------
@@ -227,18 +249,13 @@ void drawUI() {
   fill(255);
   if (countDownActive && millis() > time+timeLimit) {
     countDownActive = false;
-    ending(1);
+    ending = 1;
   }
   if (countDownActive) rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), int(0-map(millis(), time+timeLimit, time, 0, height/5*3)+4));
   else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
   fill(255,0,0);
   rect(width/4, height/20, map(health,0,100,0,width/2), height/30);
   fill(255);
-}
-
-//FINISHES
-void ending(int type) {
-  exit();
 }
 
 //SAVE INFO -------------------------
