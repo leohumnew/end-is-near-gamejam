@@ -1,4 +1,4 @@
-//import processing.javafx.*;
+import java.util.Arrays;
 
 //Save variables
 final String fileName = "saveInfo.txt";
@@ -8,19 +8,27 @@ String[] saveData = new String [1];
 int mapWidth = 60, mapHeight = 40;
 int map[][] = new int[mapWidth][mapHeight];
 MapGenerator mapGenerator = new MapGenerator();
+int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
 int visTilesX, visTilesY;
 
 //Images
-PImage stalagmite;
+PImage stalagmite, ceilHole, floorHole, floorDiggable;
 PImage[] player = new PImage[3];
 PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
 PImage[] wall = new PImage[3];
 PImage[] topWallSide = new PImage[2];
+PImage[] npcMeelee = new PImage[2];
+PImage[] bg = new PImage[2];
 
 //Player variables
-float posX = 20, posY = 20, speedX = 0, speedY = 0;
+float posX = int(random(4,mapWidth-5))-0.5, posY = int(random(5,mapHeight-6))-0.5, speedX = 0, speedY = 0;
+int time, timeLimit = 60000, health = 100;
+boolean countDownActive = false;
+
+//NPCs
+ArrayList<NPC> npcList;
 
 //SETTINGS FUNCTION -----------------
 void settings() {
@@ -30,10 +38,15 @@ void settings() {
 }
 
 void setup() {
+  frameRate(60);
   ((PGraphicsOpenGL)g).textureSampling(2);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-  map = mapGenerator.mapGenerate(5, mapWidth, mapHeight);
+  map = mapGenerator.mapGenerate(5, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5);
+  for (int i = 0; i < textureTiles.length; i++) {
+    textureTiles[i] = int(random(0, mapWidth*mapHeight));
+  }
+  npcList = mapGenerator.getNPCs();
 
   //load images
   ground[0] = loadImage("Suelo0_0.png");
@@ -50,13 +63,22 @@ void setup() {
   player[0] = loadImage("Char1.png");
   player[1] = loadImage("Char2.png");
   player[2] = loadImage("Char3.png");
+  ceilHole = loadImage("Entr.png");
+  npcMeelee[0] = loadImage("Char7.png");
+  npcMeelee[1] = loadImage("Char8.png");
+  bg[0] = loadImage("BG0.png");
+  bg[1] = loadImage("BG1.png");
 }
 
 void draw() {
   background(0);
   drawMap();
-  drawPlayer();
   move();
+  for (int i = 0; i < npcList.size(); i++) {
+    npcList.get(i).drawNPC();
+  }
+  drawPlayer();
+  drawUI();
 }
 
 //MAP FUNCTIONS ------------------
@@ -72,22 +94,26 @@ void setMapPos(int x, int y, int value) {
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  map[x][y] = value;
+  if(map[x][y] != 5)map[x][y] = value;
 }
 
 //PLAYER FUNCTIONS ------------------
 void move() {
   //collision
-  if (speedX > 0 && getMapPos(floor(posX+0.4+speedX),floor(posY+0.45)) == 0 && (getMapPos(floor(posX+0.4+speedX),floor(posY)) == 0 || getMapPos(floor(posX+0.4+speedX),floor(posY)) == 2 || getMapPos(floor(posX+0.4+speedX),floor(posY)) == 4)) posX += speedX;
-  else if (speedX < 0 && getMapPos(floor(posX-0.4+speedX),floor(posY+0.45)) == 0 && (getMapPos(floor(posX-0.4+speedX),floor(posY)) == 0 || getMapPos(floor(posX-0.4+speedX),floor(posY)) == 2 || getMapPos(floor(posX-0.4+speedX),floor(posY)) == 4)) posX += speedX;
-  if (speedY > 0 && getMapPos(floor(posX+0.4),floor(posY+0.45+speedY)) == 0 && getMapPos(floor(posX-0.4),floor(posY+0.45+speedY)) == 0) posY += speedY;
-  else if (speedY < 0 && getMapPos(floor(posX+0.4),floor(posY+speedY)) == 0 && getMapPos(floor(posX-0.4),floor(posY+speedY)) == 0) posY += speedY;
+  if (speedX > 0 && contains(new int[]{0,5}, getMapPos(floor(posX+0.4+speedX),floor(posY+0.45))) && !contains(new int[]{1}, getMapPos(floor(posX+0.4+speedX),floor(posY)))) posX += speedX;
+  else if (speedX < 0 && contains(new int[]{0,5}, getMapPos(floor(posX-0.4+speedX),floor(posY+0.45))) && !contains(new int[]{1}, getMapPos(floor(posX-0.4+speedX),floor(posY)))) posX += speedX;
+  if (speedY > 0 && contains(new int[]{0,5}, getMapPos(floor(posX+0.4),floor(posY+0.45+speedY))) && contains(new int[]{0,5}, getMapPos(floor(posX-0.4),floor(posY+0.45+speedY)))) posY += speedY;
+  else if (speedY < 0 && contains(new int[]{0,5}, getMapPos(floor(posX+0.4),floor(posY+speedY))) && contains(new int[]{0,5}, getMapPos(floor(posX-0.4),floor(posY+speedY)))) posY += speedY;
   if (posX < 0) posX = mapWidth-0.05;
   else if (posX >= mapWidth) posX = 0;
   if (posY < 0) posY = mapHeight-0.05;
   else if (posY >= mapHeight) posY = 0;
 }
 void keyPressed() {
+  if (countDownActive == false) {
+    countDownActive = true;
+    time = millis();
+  }
   if (key == 'w' || key == 'W' || keyCode == UP) {
     speedY = -0.1;
   } else if (key == 's' || key == 'S' || keyCode == DOWN) {
@@ -147,7 +173,7 @@ void drawPlayer() {
   if (speedX == 0 && speedY == 0) {
     image(player[0], width/2-tileSize/2, height/2-tileSize/2, tileSize, tileSize);
   } else {
-    if (frameCount%10 < 5) image(player[1], width/2-tileSize/2, height/2-tileSize/2, tileSize, tileSize);
+    if (frameCount%16 < 8) image(player[1], width/2-tileSize/2, height/2-tileSize/2, tileSize, tileSize);
     else image(player[2], width/2-tileSize/2, height/2-tileSize/2, tileSize, tileSize);
   }
 }
@@ -167,7 +193,9 @@ void drawMap() {
       if (j < 0) j = mapHeight+j;
       else if (j >= mapHeight) j = j-mapHeight;
 
-      if (map[i][j]==1 && (getMapPos(i+1,j) != 1 || getMapPos(i,j+1) != 1 || getMapPos(i-1,j) != 1 || getMapPos(i,j-1) != 1 || getMapPos(i+1,j+1) != 1 || getMapPos(i-1,j-1) != 1 || getMapPos(i+1,j-1) != 1 || getMapPos(i-1,j+1) != 1)) {
+      if (map[i][j]==0) {
+        image(ground[floor(posSeed(3, i+j))], tilePosX, tilePosY, tileSize, tileSize);
+      } else if (map[i][j]==1 && (getMapPos(i+1,j) != 1 || getMapPos(i,j+1) != 1 || getMapPos(i-1,j) != 1 || getMapPos(i,j-1) != 1 || getMapPos(i+1,j+1) != 1 || getMapPos(i-1,j-1) != 1 || getMapPos(i+1,j-1) != 1 || getMapPos(i-1,j+1) != 1)) {
         image(wall[floor(posSeed(3, i+j))], tilePosX, tilePosY, tileSize, tileSize);
       } else if (map[i][j]==2) {
         image(topWall[floor(posSeed(2, i+j))], tilePosX, tilePosY, tileSize, tileSize);
@@ -175,8 +203,10 @@ void drawMap() {
         image(stalagmite, tilePosX, tilePosY, tileSize, tileSize);
       } else if (map[i][j]==4) {
         image(topWallSide[floor(posSeed(2, i+j))], tilePosX, tilePosY, tileSize, tileSize);
-      } else if (map[i][j]==0) {
-        image(ground[floor(posSeed(3, i+j))], tilePosX, tilePosY, tileSize, tileSize);
+      } else if (map[i][j]==5 && getMapPos(i, j+2) == 5 && getMapPos(i+2, j) == 5) {
+        image(ceilHole, tilePosX, tilePosY, tileSize*3, tileSize*3);
+      } else if (map[i][j] == 1 && (contains(textureTiles, i*j) || contains(textureTiles, int(i*j/2)))) {
+        image(bg[floor(posSeed(2, i*j))], tilePosX, tilePosY, tileSize, tileSize);
       }
       
       i = iOriginal;
@@ -187,6 +217,28 @@ void drawMap() {
 
 int posSeed(int num, int pos) {
   return pos % num;
+}
+
+void drawUI() {
+  fill(0);
+  stroke(255);
+  rect(int(width-width/20), int(height/5), int(width/30), int(height/5*3));
+  stroke(0);
+  fill(255);
+  if (countDownActive && millis() > time+timeLimit) {
+    countDownActive = false;
+    ending(1);
+  }
+  if (countDownActive) rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), int(0-map(millis(), time+timeLimit, time, 0, height/5*3)+4));
+  else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
+  fill(255,0,0);
+  rect(width/4, height/20, map(health,0,100,0,width/2), height/30);
+  fill(255);
+}
+
+//FINISHES
+void ending(int type) {
+  exit();
 }
 
 //SAVE INFO -------------------------
@@ -205,4 +257,9 @@ void loadSave() {
 
 void saveSave() {
   saveStrings(dataPath(fileName), saveData);
+}
+
+//UTILS
+boolean contains(int[] arr, int key) {
+    return Arrays.stream(arr).anyMatch(i -> i == key);
 }
