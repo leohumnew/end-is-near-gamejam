@@ -13,7 +13,7 @@ int tileSize = 64;
 int visTilesX, visTilesY;
 
 //Images
-PImage stalagmite, ceilHole, floorHole, floorDiggable;
+PImage stalagmite, ceilHole, floorHole, floorDiggable, shot;
 PImage[] player = new PImage[3];
 PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
@@ -27,12 +27,13 @@ PFont pixelatedFont;
 
 //Player variables
 float posX = int(random(4,mapWidth-5))-0.5, posY = int(random(5,mapHeight-6))-0.5, speedX = 0, speedY = 0;
-int time, timeLimit = 60000, health = 100;
+int time, timeLimit = 60000, health = 100, delay;
 boolean countDownActive = false;
 int ending = -1;
 
-//NPCs
+//Objects
 ArrayList<NPC> npcList;
+ArrayList<Bullet> bulletList = new ArrayList<Bullet>();
 
 //SETTINGS FUNCTION -----------------
 void settings() {
@@ -76,13 +77,18 @@ void setup() {
   bg[1] = loadImage("BG1.png");
   endScreens[0] = loadImage("D0.png");
   endScreens[1] = loadImage("D1.png");
+  shot = loadImage("Shot.png");
 }
 
 void draw() {
   if (ending == -1) {
     background(0);
+    if (mousePressed && mouseButton == RIGHT) dig();
     drawMap();
     move();
+    for (int i = 0; i < bulletList.size(); i++) {
+      bulletList.get(i).update();
+    }
     for (int i = 0; i < npcList.size(); i++) {
       npcList.get(i).drawNPC();
     }
@@ -146,41 +152,7 @@ void keyPressed() {
     speedX = 0.1;
   // dig
   } else if (key == 'e') {
-    if (speedX > 0) {
-      setMapPos(floor(posX+1), floor(posY+0.4), 0);
-      setMapPos(floor(posX+1), floor(posY-0.4), 0);
-      if (getMapPos(floor(posX+1), floor(posY-0.4)-1) == 1) {
-        if (getMapPos(floor(posX+1), floor(posY-0.4)-2) == 1) setMapPos(floor(posX+1), floor(posY-0.4)-1, 2);
-        else setMapPos(floor(posX+1), floor(posY-0.4)-1, 4);
-      }
-      if (getMapPos(floor(posX+1), floor(posY+0.4)+1) == 2) setMapPos(floor(posX+1), floor(posY+0.4)+1, 4);
-    } else if (speedX < 0) {
-      setMapPos(floor(posX-1), floor(posY+0.4), 0);
-      setMapPos(floor(posX-1), floor(posY-0.4), 0);
-      if (getMapPos(floor(posX-1), floor(posY-0.4)-1) == 1) {
-        if (getMapPos(floor(posX-1), floor(posY-0.4)-2) == 1) setMapPos(floor(posX-1), floor(posY-0.4)-1, 2);
-        else setMapPos(floor(posX-1), floor(posY-0.4)-1, 4);
-      }
-      if (getMapPos(floor(posX-1), floor(posY+0.4)+1) == 2) setMapPos(floor(posX-1), floor(posY+0.4)+1, 4);
-    } else if (speedY > 0) {
-      setMapPos(floor(posX+0.4), floor(posY+1), 0);
-      if (getMapPos(floor(posX+0.4), floor(posY+1)+1) == 1 && (getMapPos(floor(posX+0.4), floor(posY+1)+2) != 1 && getMapPos(floor(posX+0.4), floor(posY+1)+2) != 2)) setMapPos(floor(posX+0.4), floor(posY+1)+1, 4);
-      else if (getMapPos(floor(posX+0.4), floor(posY+1)+1) == 2) setMapPos(floor(posX+0.4), floor(posY+1)+1, 4);
-      setMapPos(floor(posX-0.4), floor(posY+1), 0);
-      if (getMapPos(floor(posX-0.4), floor(posY+1)+1) == 1 && (getMapPos(floor(posX-0.4), floor(posY+1)+2) != 1 && getMapPos(floor(posX-0.4), floor(posY+1)+2) != 2)) setMapPos(floor(posX-0.4), floor(posY+1)+1, 4);
-      else if (getMapPos(floor(posX-0.4), floor(posY+1)+1) == 2) setMapPos(floor(posX-0.4), floor(posY+1)+1, 4);
-    } else if (speedY < 0) {
-      setMapPos(floor(posX+0.4), floor(posY-1), 0);
-      setMapPos(floor(posX-0.4), floor(posY-1), 0);
-      if (getMapPos(floor(posX+0.4), floor(posY-1)-1) == 1) {
-        if (getMapPos(floor(posX+0.4), floor(posY-1)-2) == 1) setMapPos(floor(posX+0.4), floor(posY-1)-1, 2);
-        else setMapPos(floor(posX+0.4), floor(posY-1)-1, 4);
-      }
-      if (getMapPos(floor(posX-0.4), floor(posY-1)-1) == 1) {
-        if (getMapPos(floor(posX-0.4), floor(posY-1)-2) == 1) setMapPos(floor(posX-0.4), floor(posY-1)-1, 2);
-        else setMapPos(floor(posX-0.4), floor(posY-1)-1, 4);
-      }
-    }
+    dig();
   }
 }
 void keyReleased() {
@@ -188,6 +160,55 @@ void keyReleased() {
     speedY = 0;
   } else if (key == 'a' || key == 'A' || keyCode == LEFT || key == 'd' || key == 'D' || keyCode == RIGHT) {
     speedX = 0;
+  }
+}
+
+void dig() {
+  if (speedX > 0) {
+    setMapPos(floor(posX+1), floor(posY+0.4), 0);
+    setMapPos(floor(posX+1), floor(posY-0.4), 0);
+    if (getMapPos(floor(posX+1), floor(posY-0.4)-1) == 1) {
+      if (getMapPos(floor(posX+1), floor(posY-0.4)-2) == 1) setMapPos(floor(posX+1), floor(posY-0.4)-1, 2);
+      else setMapPos(floor(posX+1), floor(posY-0.4)-1, 4);
+    }
+    if (getMapPos(floor(posX+1), floor(posY+0.4)+1) == 2) setMapPos(floor(posX+1), floor(posY+0.4)+1, 4);
+  } else if (speedX < 0) {
+    setMapPos(floor(posX-1), floor(posY+0.4), 0);
+    setMapPos(floor(posX-1), floor(posY-0.4), 0);
+    if (getMapPos(floor(posX-1), floor(posY-0.4)-1) == 1) {
+      if (getMapPos(floor(posX-1), floor(posY-0.4)-2) == 1) setMapPos(floor(posX-1), floor(posY-0.4)-1, 2);
+      else setMapPos(floor(posX-1), floor(posY-0.4)-1, 4);
+    }
+    if (getMapPos(floor(posX-1), floor(posY+0.4)+1) == 2) setMapPos(floor(posX-1), floor(posY+0.4)+1, 4);
+  } else if (speedY > 0) {
+    setMapPos(floor(posX+0.4), floor(posY+1), 0);
+    if (getMapPos(floor(posX+0.4), floor(posY+1)+1) == 1 && (getMapPos(floor(posX+0.4), floor(posY+1)+2) != 1 && getMapPos(floor(posX+0.4), floor(posY+1)+2) != 2)) setMapPos(floor(posX+0.4), floor(posY+1)+1, 4);
+    else if (getMapPos(floor(posX+0.4), floor(posY+1)+1) == 2) setMapPos(floor(posX+0.4), floor(posY+1)+1, 4);
+    setMapPos(floor(posX-0.4), floor(posY+1), 0);
+    if (getMapPos(floor(posX-0.4), floor(posY+1)+1) == 1 && (getMapPos(floor(posX-0.4), floor(posY+1)+2) != 1 && getMapPos(floor(posX-0.4), floor(posY+1)+2) != 2)) setMapPos(floor(posX-0.4), floor(posY+1)+1, 4);
+    else if (getMapPos(floor(posX-0.4), floor(posY+1)+1) == 2) setMapPos(floor(posX-0.4), floor(posY+1)+1, 4);
+  } else if (speedY < 0) {
+    setMapPos(floor(posX+0.4), floor(posY-1), 0);
+    setMapPos(floor(posX-0.4), floor(posY-1), 0);
+    if (getMapPos(floor(posX+0.4), floor(posY-1)-1) == 1) {
+      if (getMapPos(floor(posX+0.4), floor(posY-1)-2) == 1) setMapPos(floor(posX+0.4), floor(posY-1)-1, 2);
+      else setMapPos(floor(posX+0.4), floor(posY-1)-1, 4);
+    }
+    if (getMapPos(floor(posX-0.4), floor(posY-1)-1) == 1) {
+      if (getMapPos(floor(posX-0.4), floor(posY-1)-2) == 1) setMapPos(floor(posX-0.4), floor(posY-1)-1, 2);
+      else setMapPos(floor(posX-0.4), floor(posY-1)-1, 4);
+    }
+  }
+}
+
+//Shoot
+void mousePressed() {
+  if (mouseButton == LEFT) {
+    if(mouseX < width/2){
+      if(mouseY < height/2) bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2))-PI, true));
+      else bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2))+PI, true));
+    }
+    else bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2)), true));
   }
 }
 
