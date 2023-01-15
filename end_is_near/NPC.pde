@@ -21,8 +21,8 @@ public class NPC {
             else if (yPos >= mapHeight) yPos = 0;
         }
         if (dist(xPos, yPos, posX, posY) < 1 && frameCount%16 == 0) {
-            if (health > 0) health -= 10;
-            else if (ending == -1) ending = 1;
+            if (health > 0) health -= 1;
+            else if (ending == -1) ending = 0;
         }
     }
 

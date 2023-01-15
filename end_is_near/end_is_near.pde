@@ -22,18 +22,21 @@ PImage[] topWallSide = new PImage[2];
 PImage[] npcMeelee = new PImage[2];
 PImage[] bg = new PImage[2];
 PImage[] endScreens = new PImage[2];
+PImage[] items = new PImage[1];
 
 PFont pixelatedFont;
 
 //Player variables
 float posX = int(random(4,mapWidth-5))-0.5, posY = int(random(5,mapHeight-6))-0.5, speedX = 0, speedY = 0;
-int time, timeLimit = 60000, health = 100, delay;
+int time, timeLimit = 60000, health = 100, delayInt;
 boolean countDownActive = false;
 int ending = -1;
+int[] inventory = {0};
 
 //Objects
 ArrayList<NPC> npcList;
 ArrayList<Bullet> bulletList = new ArrayList<Bullet>();
+ArrayList<Pickup> itemList = new ArrayList<Pickup>();
 
 //SETTINGS FUNCTION -----------------
 void settings() {
@@ -78,14 +81,21 @@ void setup() {
   endScreens[0] = loadImage("D0.png");
   endScreens[1] = loadImage("D1.png");
   shot = loadImage("Shot.png");
+  items[0] = loadImage("Key.png");
 }
 
 void draw() {
   if (ending == -1) {
     background(0);
-    if (mousePressed && mouseButton == RIGHT) dig();
+    if (mousePressed && mouseButton == RIGHT && millis()-delayInt > 80) {
+      dig();
+      delayInt = millis();
+    }
     drawMap();
     move();
+    for (int i = 0; i < itemList.size(); i++) {
+      itemList.get(i).update();
+    }
     for (int i = 0; i < bulletList.size(); i++) {
       bulletList.get(i).update();
     }

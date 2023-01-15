@@ -123,9 +123,9 @@ public class MapGenerator {
       {2,0,0,6,0,0,3,0,0,0,3,0,0,6,0,0},
       {2,0,0,6,0,0,3,0,0,0,3,0,0,6,0,0},
       {1,1,1,2,3,3,4,6,0,6,4,3,3,1,1,1},
-      {2,0,0,0,0,0,6,4,3,4,6,0,0,0,0,0},
-      {2,0,0,0,0,0,0,3,7,3,0,0,0,0,0,0},
-      {2,0,0,0,0,0,6,4,3,4,6,0,0,0,0,0},
+      {2,0,0,0,0,0,6,4,0,4,6,0,0,0,0,0},
+      {2,0,0,0,0,0,0,0,7,0,0,0,0,0,0,0},
+      {2,0,0,0,0,0,6,4,0,4,6,0,0,0,0,0},
       {1,1,1,2,3,3,4,6,0,6,4,3,3,1,1,1},
       {2,0,0,6,0,0,3,0,0,0,3,0,0,6,0,0},
       {2,0,0,6,0,0,3,0,0,0,3,0,0,6,0,0},
@@ -175,7 +175,13 @@ public class MapGenerator {
 
       for (int j = x; j < x+specialRoomTemplates[room].length; j++) {
         for (int k = y; k < y+specialRoomTemplates[room][0].length; k++) {
-          map[j][k] = specialRoomTemplates[room][j-x][k-y];
+          if(specialRoomTemplates[room][j-x][k-y] == 6) {
+            map[j][k] = 0;
+            npcs.add(new NPC(true, j, k));
+          } else if (specialRoomTemplates[room][j-x][k-y] == 7) {
+            map[j][k] = 0;
+            itemList.add(new Pickup(j, k, 0));
+          } else map[j][k] = specialRoomTemplates[room][j-x][k-y];
         }
       }
     }
@@ -197,8 +203,7 @@ public class MapGenerator {
           if(roomTemplates[room][j-x][k-y] == 6) {
             map[j][k] = 0;
             npcs.add(new NPC(true, j, k));
-          }
-          else map[j][k] = roomTemplates[room][j-x][k-y];
+          } else map[j][k] = roomTemplates[room][j-x][k-y];
         }
       }
     }
