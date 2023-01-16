@@ -1,4 +1,3 @@
-import java.util.Arrays;
 import processing.sound.*;
 SoundFile OST, breakRock, shoot;
 
@@ -27,7 +26,7 @@ PImage[] bg = new PImage[2];
 PImage[] endScreens = new PImage[3];
 PImage[] introScreens = new PImage[4];
 PImage[] items = new PImage[1];
-PImage[] UI = new PImage[1];
+PImage[] UI = new PImage[2];
 
 PFont pixelatedFont;
 
@@ -38,7 +37,7 @@ boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
 int[] inventory;
 
-String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's Speace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way,\nSPeace disturbed", "Earth's end was arriving."};
+String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's SPeace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way,\nSPeace disturbed", "Earth's end was arriving."};
 String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot;\nbullseye on the target: he was always my favorite, you know.\""};
 
 //Objects
@@ -94,6 +93,7 @@ void load() {
   vignette = loadImage("Vig.png");
   door = loadImage("Pared0_EN.png");
   UI[0] = loadImage("Frame1.png");
+  UI[1] = loadImage("LifeFrame.png");
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
@@ -141,7 +141,7 @@ void draw() {
     textSize(50);
     //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
     if (ending == 3) {
-      if (millis()-delayInt > 4000 && transitioningTo == 0) {
+      if (millis()-delayInt > 3000 && transitioningTo == 0) {
         if (counter >= 3) {
           changeScene(1);
         } else {
@@ -340,21 +340,21 @@ int posSeed(int num, int pos) {
 }
 
 void drawUI() {
-  fill(0);
-  stroke(255);
-  image(UI[0], width-width/20, height/5, width/30, height/5*3);
-  stroke(0);
+  noStroke();
   fill(255);
   if (countDownActive && millis() > time+timeLimit) {
     countDownActive = false;
     ending = 1;
     changeScene(-3);
   }
-  if (countDownActive) rect(width-width/20+width/90, height/5*4-2, width/40, 0-map(millis(), time+timeLimit, time, 0, height/5*3)+4);
+  if (countDownActive) rect(width-width/20, height/5*4, width/30, 0-map(millis(), time+timeLimit, time, 0, height/5*3)+4);
   else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
+  image(UI[0], width-width/20, height/5, width/30, height/5*3);
   fill(255,0,0);
-  rect(width/4, height/25, map(health,0,100,0,width/2), height/30);
+  rect(width/20, height/25, map(health,0,100,0,4*tileSize), 1.5*tileSize);
+  image(UI[1], width/20, height/25, 4*tileSize, 1.5*tileSize);
   fill(255);
+  stroke(0);
 
   //Inventory
   for (int i = 0; i < inventory.length; i++) {
@@ -369,7 +369,7 @@ void drawUI() {
     drawKey('A', width/2-tileSize*2, height/2-tileSize/2);
     drawKey('S', width/2-tileSize/2, height/2+tileSize);
     drawKey('D', width/2+tileSize, height/2-tileSize/2);
-    banner("Save the Earth");
+    banner("Save the Earth.\nAvoid the alien Tenshi.");
   }
 }
 
@@ -435,7 +435,13 @@ void saveSave() {
 
 //UTILS
 boolean contains(int[] arr, int key) {
-    return Arrays.stream(arr).anyMatch(i -> i == key);
+    //return Arrays.stream(arr).anyMatch(i -> i == key);
+    for (int i : arr) {
+        if (i == key) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void drawKey(char keyToShow, int x, int y) {

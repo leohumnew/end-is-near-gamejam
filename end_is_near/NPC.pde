@@ -1,6 +1,6 @@
 public class NPC {
   boolean meelee, playerInRadius = false;
-  int death = 0;
+  int death = 0, randomSeed = int(random(14));
   float xPos, yPos;
   float npcSpeedX = 0.03, npcSpeedY = 0.03;
 
@@ -21,8 +21,8 @@ public class NPC {
       if (yPos < 0) yPos = mapHeight-0.05;
       else if (yPos >= mapHeight) yPos = 0;
     }
-    if (dist(xPos, yPos, posX, posY) < 1 && frameCount%16 == 0) {
-      health -= 35;
+    if (dist(xPos, yPos, posX, posY) < 1 && frameCount%16 == int(randomSeed)) {
+      health -= 34;
       if (health <= 0) {
         health = 0;
         ending = 0;
@@ -49,7 +49,7 @@ public class NPC {
       x = xPos*tileSize-posX*tileSize+width/2-tileSize/2;
       y = yPos*tileSize-posY*tileSize+height/2-tileSize/2;
       if (millis()-death < 200) image(npcMeelee[2], x, y, tileSize, tileSize);
-      else if (millis()-death < 800) image(npcMeelee[3], x, y, tileSize, tileSize);
+      else if (millis()-death < 600) image(npcMeelee[3], x, y, tileSize, tileSize);
       else npcList.remove(this);
     }
   }
