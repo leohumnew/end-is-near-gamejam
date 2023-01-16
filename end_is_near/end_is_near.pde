@@ -37,8 +37,8 @@ boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
 int[] inventory;
 
-String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's SPeace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way,\nSPeace disturbed", "Earth's end was arriving."};
-String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know.\""};
+String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's SPeace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way, SPeace disturbed", "Earth's end was arriving."};
+String[] endText = {"And thus was Earth's only chance lost, but no one cared anymore; truth was, Earth's last hope was long gone.", "Though he didn't suffocate, he proved himself useless, once more; I should have definitely gone with the Space dog.", "*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know."};
 
 //Objects
 ArrayList<NPC> npcList;
