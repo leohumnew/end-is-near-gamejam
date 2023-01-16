@@ -142,7 +142,7 @@ void draw() {
     textSize(50);
     //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
     if (ending == 3) {
-      if (millis()-delayInt > 3000 && transitioningTo == 0) {
+      if (millis()-delayInt > 4000 && transitioningTo == 0) {
         if (counter >= 3) {
           changeScene(1);
         } else {
@@ -167,7 +167,9 @@ void draw() {
       teleport(transitioningTo);
     } else fill(#08141E, map(millis()-fadeStart, 1000, 2000, 255, 0));
     if (millis()-fadeStart > 2000) fadeStart = 0;
+    noStroke();
     rect(0, 0, width, height);
+    stroke(255);
   }
 }
 
