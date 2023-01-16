@@ -38,7 +38,7 @@ int ending = 3, counter = -1, level = -1;
 int[] inventory;
 
 String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's SPeace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way,\nSPeace disturbed", "Earth's end was arriving."};
-String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot;\nbullseye on the target: he was always my favorite, you know.\""};
+String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know.\""};
 
 //Objects
 ArrayList<NPC> npcList;
@@ -48,13 +48,14 @@ ArrayList<Pickup> itemList = new ArrayList<Pickup>();
 //SETTINGS FUNCTION -----------------
 void settings() {
   loadSave();
-  if (int(saveData[0])==1)fullScreen(P2D);
-  else size(1280, 720, P2D);
+  if (int(saveData[0])==1)fullScreen();
+  else size(1280, 720);
+  //((PGraphicsOpenGL)g).textureSampling(2);
+  noSmooth();
 }
 
 void setup() {
   frameRate(60);
-  ((PGraphicsOpenGL)g).textureSampling(2);
   textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
@@ -117,12 +118,12 @@ void draw() {
     if (level < 4 && ((mousePressed && mouseButton == RIGHT) || (keyPressed && key == 'e')) && millis()-delayInt > 80) {
       dig();
       delayInt = millis();
-    } else if (level == 4 && millis()-delayInt > 5000) {
+    } else if (level == 4 && millis()-delayInt > 4000) {
       ending = 2;
       changeScene(-3);
     }
-    drawMap();
     move();
+    drawMap();
     for (int i = 0; i < bulletList.size(); i++) {
       bulletList.get(i).update();
     }
@@ -154,8 +155,9 @@ void draw() {
     } else {
       image(endScreens[ending], 0, 0, width, height);
       fill(255);
-      text(endText[ending], width/16, height/5*3.5, width/16*14, height/5);
-      text("SPACE to retry", 0, height/5*4.5, width, height/15);
+      text(endText[ending], width/16, height/5*3.7, width/16*14, height/5);
+      textSize(30);
+      text("SPACE to play again", 0, height/5*4.7, width, height/20);
     }
   } else if (level == -4 && transitioningTo == 0) changeScene(-3);
   if (fadeStart > 0) {
@@ -269,11 +271,7 @@ void dig() {
 void mousePressed() {
   if (mouseButton == LEFT && level > 0) {
     if(shoot != null)shoot.play();
-    if(mouseX < width/2){
-      if(mouseY < height/2) bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2))-PI, true));
-      else bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2))+PI, true));
-    }
-    else bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2)), true));
+    bulletList.add(new Bullet(posX+0.3, posY+0.4, 0.1, atan2(mouseY-height/2,mouseX-width/2), true));
   }
 }
 
@@ -365,11 +363,13 @@ void drawUI() {
 
   //Tutorial
   if (level == 1 && !countDownActive) {
-    drawKey('W', width/2-tileSize/2, height/2-tileSize*2);
-    drawKey('A', width/2-tileSize*2, height/2-tileSize/2);
-    drawKey('S', width/2-tileSize/2, height/2+tileSize);
-    drawKey('D', width/2+tileSize, height/2-tileSize/2);
-    banner("Save the Earth.\nAvoid the alien Tenshi.");
+    drawKey("W", "UP", width/2-tileSize/2, height/2-tileSize*2, false);
+    drawKey("A", "LEFT", width/2-tileSize*2, height/2-tileSize/2, false);
+    drawKey("S", "DOWN", width/2-tileSize/2, height/2+tileSize, false);
+    drawKey("D", "RIGHT", width/2+tileSize, height/2-tileSize/2, false);
+    drawKey("Right Mouse", "DIG", width/2+tileSize*2, height/2-3*tileSize, true);
+    drawKey("Left Mouse", "SHOOT", width/2-tileSize*4, height/2-3*tileSize, true);
+    banner("Save the Earth. Avoid the alien Tenshi.");
   }
 }
 
@@ -435,24 +435,37 @@ void saveSave() {
 
 //UTILS
 boolean contains(int[] arr, int key) {
-    //return Arrays.stream(arr).anyMatch(i -> i == key);
-    for (int i : arr) {
-        if (i == key) {
-            return true;
-        }
-    }
-    return false;
+  for (int i : arr) {
+      if (i == key) {
+          return true;
+      }
+  }
+  return false;
 }
 
-void drawKey(char keyToShow, int x, int y) {
+// float correctedPosX() {
+//   return (posX < visTilesX) ? posX + mapWidth : (posX > mapWidth-visTilesX) ? posX - mapWidth : posX;
+// }
+// float correctedPosY() {
+//   return (posY < visTilesY) ? posY + mapHeight : (posY > mapHeight-visTilesY) ? posY - mapHeight : posY;
+// }
+
+void drawKey(String keyToShow, String alt, int x, int y, boolean wide) {
   fill(0);
-  rect(x, y, tileSize, tileSize, tileSize/8);
+  if (wide) rect(x, y, 2*tileSize, tileSize, tileSize/8);
+  else rect(x, y, tileSize, tileSize, tileSize/8);
   fill(255);
-  text(keyToShow, x+tileSize/2, y+tileSize/2);
+  textSize(25);
+  if (wide)text(keyToShow, x+tileSize, y+tileSize/3);
+  else text(keyToShow, x+tileSize/2, y+tileSize/3);
+  textSize(18);
+  if (wide)text(alt, x+tileSize, y+tileSize/3*2.2);
+  else text(alt, x+tileSize/2, y+tileSize/3*2.2);
 }
 
 void banner(String text) {
   fill(0);
+  textSize(50);
   stroke(255);
   rect(width/6, height/1.22, width/6*4, height/10);
   fill(255);

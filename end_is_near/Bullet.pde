@@ -24,14 +24,15 @@ public class Bullet {
       bulletList.remove(this);
     }
     for (int i = 0; i < npcList.size(); i++) {
-      if (friendly && dist(x, y, npcList.get(i).xPos, npcList.get(i).yPos) < 0.6) {
+      if (friendly && dist(x, y, npcList.get(i).xPos, npcList.get(i).yPos) < 0.6 && npcList.get(i).death == 0) {
         npcList.get(i).death = millis();
         bulletList.remove(this);
+        break;
       }
     }
     if (!friendly && dist(x, y, posX, posY) < 0.6) {
       bulletList.remove(this);
-      health -= 1;
+      health -= 30;
     }
   }
 }

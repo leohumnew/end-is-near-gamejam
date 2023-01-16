@@ -3,6 +3,7 @@ public class NPC {
   int death = 0, randomSeed = int(random(14));
   float xPos, yPos;
   float npcSpeedX = 0.03, npcSpeedY = 0.03;
+  float x, y;
 
   public NPC (boolean meelee, int xPos, int yPos) {
     this.meelee = meelee;
@@ -32,30 +33,26 @@ public class NPC {
   }
 
   public void drawNPC() {
-    float x, y;
+    x = xPos*tileSize-posX*tileSize+width/2-tileSize/2;
+    y = yPos*tileSize-posY*tileSize+height/2-tileSize/2;
+    if (x < 0 || x > width || y < 0 || y > height) return;
+
     if (death == 0) {
       checkPlayerInRadius();
       updatePos();
-      x = xPos*tileSize-posX*tileSize+width/2-tileSize/2;
-      y = yPos*tileSize-posY*tileSize+height/2-tileSize/2;
       if (meelee) {
-          //draw meelee NPC
           if(frameCount%16 > 7)image(npcMeelee[0], x, y, tileSize, tileSize);
           else image(npcMeelee[1], x, y, tileSize, tileSize);
-      } else {
-          //draw ranged NPC
       }
     } else {
-      x = xPos*tileSize-posX*tileSize+width/2-tileSize/2;
-      y = yPos*tileSize-posY*tileSize+height/2-tileSize/2;
-      if (millis()-death < 200) image(npcMeelee[2], x, y, tileSize, tileSize);
-      else if (millis()-death < 600) image(npcMeelee[3], x, y, tileSize, tileSize);
+      if (millis()-death < 150) image(npcMeelee[2], x, y, tileSize, tileSize);
+      else if (millis()-death < 400) image(npcMeelee[3], x, y, tileSize, tileSize);
       else npcList.remove(this);
     }
   }
 
   void checkPlayerInRadius() {
-    if (dist(xPos, yPos, xPos, yPos) < 10) {
+    if (dist(xPos, yPos, xPos, yPos) < 8) {
       playerInRadius = true;
     } else {
       playerInRadius = false;
