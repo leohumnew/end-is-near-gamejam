@@ -13,12 +13,15 @@ public class Pickup {
   }
 
   void checkPickup() {
-    if (dist(x, y, posX, posY) < 0.8) {
+    if (dist(x, y, posX, posY) < 1) {
       if (item >= 0) {
         inventory[0] = 0;
         itemList.remove(this);
-      } else {
-        teleport(4);
+      } else if (item == -1) {
+        if (inventory[0] == 0) changeScene(4);
+        else {
+          banner("Locked...");
+        }
       }
     }
   }

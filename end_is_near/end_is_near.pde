@@ -12,7 +12,8 @@ int map[][] = new int[mapWidth][mapHeight];
 MapGenerator mapGenerator = new MapGenerator();
 int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
-int visTilesX, visTilesY, level = 0;
+int visTilesX, visTilesY;
+int fadeStart = 0, transitioningTo = 0;
 
 //Images
 PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, door, doorOpen, ship, menu;
@@ -21,21 +22,24 @@ PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
 PImage[] wall = new PImage[3];
 PImage[] topWallSide = new PImage[2];
-PImage[] npcMeelee = new PImage[2];
+PImage[] npcMeelee = new PImage[4];
 PImage[] bg = new PImage[2];
-PImage[] endScreens = new PImage[2];
+PImage[] endScreens = new PImage[3];
+PImage[] introScreens = new PImage[4];
 PImage[] items = new PImage[1];
+PImage[] UI = new PImage[1];
 
 PFont pixelatedFont;
 
 //Player variables
-float posX = int(random(4,mapWidth-5))-0.5, posY = int(random(5,mapHeight-6))-0.5, speedX = 0, speedY = 0;
-int time, timeLimit = 60000, health = 100, delayInt;
+float posX, posY, speedX = 0, speedY = 0;
+int time, timeLimit = 60000, health, delayInt;
 boolean countDownActive = false;
-int ending = -1;
-int[] inventory = {-1};
+int ending = 3, counter = -1, level = -1;
+int[] inventory;
 
-String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know.\""};
+String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's Speace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way,\nSPeace disturbed", "Earth's end was arriving."};
+String[] endText = {"\nAnd thus was Earth's only chance lost, but no one cared anymore;\ntruth was, Earth's last hope was long gone.\"", "\"Though he didn't suffocate, he proved himself useless, once more;\nI should have definitely gone with the Space dog.\"", "\"*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot;\nbullseye on the target: he was always my favorite, you know.\""};
 
 //Objects
 ArrayList<NPC> npcList;
@@ -52,9 +56,9 @@ void settings() {
 void setup() {
   frameRate(60);
   ((PGraphicsOpenGL)g).textureSampling(2);
+  textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-  teleport(1);
   
   pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
   textFont(pixelatedFont);
@@ -81,52 +85,87 @@ void load() {
   ceilHole = loadImage("Entr.png");
   npcMeelee[0] = loadImage("Char7.png");
   npcMeelee[1] = loadImage("Char8.png");
+  npcMeelee[2] = loadImage("Char9.png");
+  npcMeelee[3] = loadImage("Char10.png");
   bg[0] = loadImage("BG0.png");
   bg[1] = loadImage("BG1.png");
   shot = loadImage("Shot.png");
   items[0] = loadImage("Key.png");
   vignette = loadImage("Vig.png");
   door = loadImage("Pared0_EN.png");
+  UI[0] = loadImage("Frame1.png");
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
-  level = 1;
+  introScreens[0] = loadImage("E2.png");
+  introScreens[1] = loadImage("E3.png");
+  introScreens[2] = loadImage("E4.png");
+  introScreens[3] = loadImage("E5.png");
+  level = -4;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
   doorOpen = loadImage("Pared0_3.png");
   ship = loadImage("Nave.png");
   endScreens[0] = loadImage("D0.png");
   endScreens[1] = loadImage("D1.png");
+  endScreens[2] = loadImage("E9.png");
 }
 
 void draw() {
-  if (ending == -1 && level > 0) {
-    background(#08141E);
+  background(#08141E);
+  if (level > 0) {
     if (level < 4 && ((mousePressed && mouseButton == RIGHT) || (keyPressed && key == 'e')) && millis()-delayInt > 80) {
       dig();
       delayInt = millis();
-    } else if (level == 4 && millis()-delayInt > 2000) ending = 2;
+    } else if (level == 4 && millis()-delayInt > 5000) {
+      ending = 2;
+      changeScene(-3);
+    }
     drawMap();
     move();
-    for (int i = 0; i < itemList.size(); i++) {
-      itemList.get(i).update();
-    }
     for (int i = 0; i < bulletList.size(); i++) {
       bulletList.get(i).update();
     }
     for (int i = 0; i < npcList.size(); i++) {
       npcList.get(i).drawNPC();
     }
+    for (int i = 0; i < itemList.size(); i++) {
+      itemList.get(i).update();
+    }
     drawPlayer();
     image(vignette, 0, 0, width, height);
     drawUI();
-  } else if (level <= 0) {
-    image(menu, 0, 0, width, height);
-  } else {
-    image(endScreens[ending], 0, 0, width, height);
+  } else if (level == -1) {
+    text("Loading...", width/2, height/2);
+  } else if (level == -3) {
     textSize(50);
-    textAlign(CENTER);
-    text(endText[ending], width/10, height-20, width/10*8, -height/5);
+    //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
+    if (ending == 3) {
+      if (millis()-delayInt > 4000 && transitioningTo == 0) {
+        if (counter >= 3) {
+          changeScene(1);
+        } else {
+          changeScene(-3);
+        }
+      }
+      image(introScreens[counter], 0, 0, width, height);
+      fill(255);
+      text(introText[counter], width/16, height/5*3.8, width/16*14, height/5);
+    } else {
+      image(endScreens[ending], 0, 0, width, height);
+      fill(255);
+      text(endText[ending], width/16, height/5*3.5, width/16*14, height/5);
+      text("SPACE to retry", 0, height/5*4.5, width, height/15);
+    }
+  } else if (level == -4 && transitioningTo == 0) changeScene(-3);
+  if (fadeStart > 0) {
+    if (millis()-fadeStart <= 1000)fill(#08141E, map(millis()-fadeStart, 0, 1000, 0, 255));
+    else if (transitioningTo != 0) {
+      fill(#08141E, 255);
+      teleport(transitioningTo);
+    } else fill(#08141E, map(millis()-fadeStart, 1000, 2000, 255, 0));
+    if (millis()-fadeStart > 2000) fadeStart = 0;
+    rect(0, 0, width, height);
   }
 }
 
@@ -159,18 +198,24 @@ void move() {
   else if (posY >= mapHeight) posY = 0;
 }
 void keyPressed() {
-  if (countDownActive == false) {
-    countDownActive = true;
-    time = millis();
-  }
-  if (key == 'w' || key == 'W' || keyCode == UP) {
-    speedY = -0.1;
-  } else if (key == 's' || key == 'S' || keyCode == DOWN) {
-    speedY = 0.1;
-  } else if (key == 'a' || key == 'A' || keyCode == LEFT) {
-    speedX = -0.1;
-  } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
-    speedX = 0.1;
+  if (level > 0) {
+    if (countDownActive == false) {
+      countDownActive = true;
+      time = millis();
+    }
+    if (key == 'w' || key == 'W' || keyCode == UP) {
+      speedY = -0.1;
+    } else if (key == 's' || key == 'S' || keyCode == DOWN) {
+      speedY = 0.1;
+    } else if (key == 'a' || key == 'A' || keyCode == LEFT) {
+      speedX = -0.1;
+    } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
+      speedX = 0.1;
+    }
+  } else if (level == -3 && ending != 3) {
+    if (key == ' ') {
+      changeScene(1);
+    }
   }
 }
 void keyReleased() {
@@ -222,7 +267,7 @@ void dig() {
 
 //Shoot
 void mousePressed() {
-  if (mouseButton == LEFT) {
+  if (mouseButton == LEFT && level > 0) {
     if(shoot != null)shoot.play();
     if(mouseX < width/2){
       if(mouseY < height/2) bulletList.add(new Bullet(posX+0.5, posY+0.5, 0.1, atan((mouseY-height/2)/(mouseX-width/2))-PI, true));
@@ -297,14 +342,15 @@ int posSeed(int num, int pos) {
 void drawUI() {
   fill(0);
   stroke(255);
-  rect(int(width-width/20), int(height/5), int(width/30), int(height/5*3));
+  image(UI[0], width-width/20, height/5, width/30, height/5*3);
   stroke(0);
   fill(255);
   if (countDownActive && millis() > time+timeLimit) {
     countDownActive = false;
     ending = 1;
+    changeScene(-3);
   }
-  if (countDownActive) rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), int(0-map(millis(), time+timeLimit, time, 0, height/5*3)+4));
+  if (countDownActive) rect(width-width/20+width/90, height/5*4-2, width/40, 0-map(millis(), time+timeLimit, time, 0, height/5*3)+4);
   else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
   fill(255,0,0);
   rect(width/4, height/25, map(health,0,100,0,width/2), height/30);
@@ -316,18 +362,46 @@ void drawUI() {
       image(items[i], width/20+tileSize*2*i, height-tileSize*3, tileSize*2, tileSize*2);
     }
   }
+
+  //Tutorial
+  if (level == 1 && !countDownActive) {
+    drawKey('W', width/2-tileSize/2, height/2-tileSize*2);
+    drawKey('A', width/2-tileSize*2, height/2-tileSize/2);
+    drawKey('S', width/2-tileSize/2, height/2+tileSize);
+    drawKey('D', width/2+tileSize, height/2-tileSize/2);
+    banner("Save the Earth");
+  }
 }
 
 //LEVELS
-//0 = menu, 1 = main floor, 2 = second floor, 3 = third floor, 4 = spaceship
+void changeScene(int n) {
+  if (transitioningTo == 0) {
+    fadeStart = millis();
+    transitioningTo = n;
+  }
+}
+//-3 = cinematic, -2 = menu, -1 = loading, 1 = main floor, 2 = second floor, 3 = third floor, 4 = spaceship
 void teleport(int num) {
+  transitioningTo = 0;
   switch (num) {
+    case -3:
+      delayInt = millis();
+      level = -3;
+      counter++;
+    break;
     case 1:
+      level = -1;
+      inventory = new int[]{-1};
+      health = 100;
+      posX = int(random(4,mapWidth-5))-0.5;
+      posY = int(random(5,mapHeight-6))-0.5;
       map = mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0);
       for (int i = 0; i < textureTiles.length; i++) {
         textureTiles[i] = int(random(0, mapWidth*mapHeight));
       }
       npcList = mapGenerator.getNPCs();
+      level = 1;
+      counter = -1;
     break;
     case 4:
       map = new int[30][20];
@@ -336,6 +410,7 @@ void teleport(int num) {
       map = mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1);
       countDownActive = false;
       delayInt = millis();
+      level = 4;
     break;	
   }
 }
@@ -361,4 +436,19 @@ void saveSave() {
 //UTILS
 boolean contains(int[] arr, int key) {
     return Arrays.stream(arr).anyMatch(i -> i == key);
+}
+
+void drawKey(char keyToShow, int x, int y) {
+  fill(0);
+  rect(x, y, tileSize, tileSize, tileSize/8);
+  fill(255);
+  text(keyToShow, x+tileSize/2, y+tileSize/2);
+}
+
+void banner(String text) {
+  fill(0);
+  stroke(255);
+  rect(width/6, height/1.22, width/6*4, height/10);
+  fill(255);
+  text(text, width/6, height/1.22, width/6*4, height/10);
 }

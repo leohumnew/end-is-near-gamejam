@@ -25,7 +25,7 @@ public class Bullet {
     }
     for (int i = 0; i < npcList.size(); i++) {
       if (friendly && dist(x, y, npcList.get(i).xPos, npcList.get(i).yPos) < 0.6) {
-        npcList.remove(i);
+        npcList.get(i).death = millis();
         bulletList.remove(this);
       }
     }

@@ -139,6 +139,14 @@ public class MapGenerator {
       {2,0,0,0}
     },
     {
+      {1,2,0,0,1},
+      {2,0,0,0,0},
+      {2,0,0,0,0},
+      {2,0,0,0,0},
+      {2,0,0,0,0},
+      {1,2,0,0,1}
+    },
+    {
       {2,0,0,0,0,0,0,0,0,0,0,0,0},
       {2,0,0,1,1,1,1,1,1,1,1,0,0},
       {2,0,1,1,0,0,0,0,0,0,0,0,0},
@@ -147,14 +155,6 @@ public class MapGenerator {
       {2,0,1,1,0,0,0,0,0,0,0,0,0},
       {2,0,0,1,1,1,1,1,1,1,9,0,0},
       {2,0,0,0,0,0,0,0,0,0,0,0,0}
-    }
-    {
-      {1,2,0,0,1},
-      {2,0,0,0,0},
-      {2,0,9,9,0},
-      {2,0,9,9,0},
-      {2,0,0,0,0},
-      {1,2,0,0,1}
     }
   };
 
@@ -170,6 +170,7 @@ public class MapGenerator {
   int[][] mapGenerate(int roomNum, int mapWidth, int mapHeight, int startX, int startY, int mapType) { //Map type 0 = normal, 1 = spaceship
     rooms.clear();
     npcs.clear();
+    itemList.clear();
     map = new int[mapWidth][mapHeight];
 
     //Fill map with 1's
