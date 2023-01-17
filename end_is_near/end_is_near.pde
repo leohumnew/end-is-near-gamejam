@@ -1,4 +1,7 @@
 import processing.sound.*;
+import java.awt.Image;
+import java.awt.Toolkit;
+import java.awt.image.PixelGrabber;
 SoundFile OST, breakRock, shoot;
 
 //Save variables
@@ -15,7 +18,7 @@ int visTilesX, visTilesY;
 int fadeStart = 0, transitioningTo = 0;
 
 //Images
-PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, door, doorOpen, ship, menu;
+PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu;
 PImage[] player = new PImage[3];
 PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
@@ -31,8 +34,9 @@ PImage[] UI = new PImage[2];
 PFont pixelatedFont;
 
 //Player variables
+final int TIME_LIMIT = 60000;
 float posX, posY, speedX = 0, speedY = 0;
-int time, timeLimit = 60000, health, delayInt;
+int time, health, delayInt, vignetteCounter;
 boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
 int[] inventory;
@@ -63,53 +67,61 @@ void setup() {
   pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
   textFont(pixelatedFont);
   //load images
-  menu = loadImage("C1.png");
   thread("load");
 }
 
 void load() {
-  ground[0] = loadImage("Suelo0_0.png");
-  ground[1] = loadImage("Suelo0_1.png");
-  ground[2] = loadImage("Suelo0_2.png");
-  wall[0] = loadImage("Pared0_0.png");
-  wall[1] = loadImage("Pared0_1.png");
-  wall[2] = loadImage("Pared0_2.png");
-  topWall[0] = loadImage("Pared0_4.png");
-  topWall[1] = loadImage("Pared0_5.png");
-  topWallSide[0] = loadImage("Pared0_6.png");
-  topWallSide[1] = loadImage("Pared0_7.png");
-  stalagmite = loadImage("Estalagmita0.png");
-  player[0] = loadImage("Char1.png");
-  player[1] = loadImage("Char2.png");
-  player[2] = loadImage("Char3.png");
-  ceilHole = loadImage("Entr.png");
-  npcMeelee[0] = loadImage("Char7.png");
-  npcMeelee[1] = loadImage("Char8.png");
-  npcMeelee[2] = loadImage("Char9.png");
-  npcMeelee[3] = loadImage("Char10.png");
-  bg[0] = loadImage("BG0.png");
-  bg[1] = loadImage("BG1.png");
-  shot = loadImage("Shot.png");
-  items[0] = loadImage("Key.png");
-  vignette = loadImage("Vig.png");
-  door = loadImage("Pared0_EN.png");
-  UI[0] = loadImage("Frame1.png");
-  UI[1] = loadImage("LifeFrame.png");
+  menu = loadImagePng("C1.png");
+  ground[0] = loadImagePng("Suelo0_0.png");
+  ground[0].resize(tileSize, tileSize);
+  ground[1] = loadImagePng("Suelo0_1.png");
+  ground[1].resize(tileSize, tileSize);
+  ground[2] = loadImagePng("Suelo0_2.png");
+  ground[2].resize(tileSize, tileSize);
+  wall[0] = loadImagePng("Pared0_0.png");
+  wall[0].resize(tileSize, tileSize);
+  wall[1] = loadImagePng("Pared0_1.png");
+  wall[1].resize(tileSize, tileSize);
+  wall[2] = loadImagePng("Pared0_2.png");
+  wall[2].resize(tileSize, tileSize);
+  topWall[0] = loadImagePng("Pared0_4.png");
+  topWall[1] = loadImagePng("Pared0_5.png");
+  topWallSide[0] = loadImagePng("Pared0_6.png");
+  topWallSide[1] = loadImagePng("Pared0_7.png");
+  stalagmite = loadImagePng("Estalagmita0.png");
+  player[0] = loadImagePng("Char1.png");
+  player[1] = loadImagePng("Char2.png");
+  player[2] = loadImagePng("Char3.png");
+  ceilHole = loadImagePng("Entr.png");
+  npcMeelee[0] = loadImagePng("Char7.png");
+  npcMeelee[1] = loadImagePng("Char8.png");
+  npcMeelee[2] = loadImagePng("Char9.png");
+  npcMeelee[3] = loadImagePng("Char10.png");
+  bg[0] = loadImagePng("BG0.png");
+  bg[1] = loadImagePng("BG1.png");
+  shot = loadImagePng("Shot.png");
+  items[0] = loadImagePng("Key.png");
+  vignette = loadImagePng("Vig.png");
+  vignette.resize(width, height);
+  door = loadImagePng("Pared0_EN.png");
+  UI[0] = loadImagePng("Frame1.png");
+  UI[1] = loadImagePng("LifeFrame.png");
+  introScreens[0] = loadImagePng("E2.png");
+  introScreens[1] = loadImagePng("E3.png");
+  introScreens[2] = loadImagePng("E4.png");
+  introScreens[3] = loadImagePng("E5.png");
+  hitVignette = loadImagePng("HitVig.png");
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
-  introScreens[0] = loadImage("E2.png");
-  introScreens[1] = loadImage("E3.png");
-  introScreens[2] = loadImage("E4.png");
-  introScreens[3] = loadImage("E5.png");
-  level = -4;
+  level = -2;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
-  doorOpen = loadImage("Pared0_3.png");
-  ship = loadImage("Nave.png");
-  endScreens[0] = loadImage("D0.png");
-  endScreens[1] = loadImage("D1.png");
-  endScreens[2] = loadImage("E9.png");
+  doorOpen = loadImagePng("Pared0_3.png");
+  ship = loadImagePng("Nave.png");
+  endScreens[0] = loadImagePng("D0.png");
+  endScreens[1] = loadImagePng("D1.png");
+  endScreens[2] = loadImagePng("E9.png");
 }
 
 void draw() {
@@ -134,15 +146,17 @@ void draw() {
       itemList.get(i).update();
     }
     drawPlayer();
-    image(vignette, 0, 0, width, height);
+    image(vignette, 0, 0);
     drawUI();
   } else if (level == -1) {
     text("Loading...", width/2, height/2);
+  } else if (level == -2) {
+    image(menu, 0, 0, width, height);
   } else if (level == -3) {
     textSize(50);
     //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
     if (ending == 3) {
-      if (millis()-delayInt > 4000 && transitioningTo == 0) {
+      if (millis()-delayInt > 3000 && transitioningTo == 0) {
         if (counter >= 3) {
           changeScene(1);
         } else {
@@ -171,6 +185,8 @@ void draw() {
     rect(0, 0, width, height);
     stroke(255);
   }
+  //fill(255);
+  //text(frameRate, 100,100);
 }
 
 //MAP FUNCTIONS ------------------
@@ -220,6 +236,8 @@ void keyPressed() {
     if (key == ' ') {
       changeScene(1);
     }
+  } else if (level == -2 && key == ' ') {
+    changeScene(-3);
   }
 }
 void keyReleased() {
@@ -304,9 +322,9 @@ void drawMap() {
 
       currentTile = getMapPos(i, j);
       if (currentTile==0) {
-        image(ground[floor(posSeed(3, i+j))], tilePosX, tilePosY, tileSize, tileSize);
+        image(ground[floor(posSeed(3, i+j))], tilePosX, tilePosY);
       } else if (currentTile==1 && (getMapPos(i+1,j) != 1 || getMapPos(i,j+1) != 1 || getMapPos(i-1,j) != 1 || getMapPos(i,j-1) != 1 || getMapPos(i+1,j+1) != 1 || getMapPos(i-1,j-1) != 1 || getMapPos(i+1,j-1) != 1 || getMapPos(i-1,j+1) != 1)) {
-        image(wall[floor(posSeed(3, i+j))], tilePosX, tilePosY, tileSize, tileSize);
+        image(wall[floor(posSeed(3, i+j))], tilePosX, tilePosY);
       } else if (currentTile==2) {
         image(topWall[floor(posSeed(2, i+j))], tilePosX, tilePosY, tileSize, tileSize);
       } else if (currentTile==3) {
@@ -342,12 +360,20 @@ int posSeed(int num, int pos) {
 void drawUI() {
   noStroke();
   fill(255);
-  if (countDownActive && millis() > time+timeLimit) {
+
+  if (vignetteCounter != 0) {
+    if (millis()-vignetteCounter > 200) vignetteCounter = 0;
+    tint(255, map(millis()-vignetteCounter, 0, 200, 255, 0));
+    image(hitVignette, 0, 0, width, height);
+    tint(255, 255);
+  }
+
+  if (countDownActive && millis() > time+TIME_LIMIT) {
     countDownActive = false;
     ending = 1;
     changeScene(-3);
   }
-  if (countDownActive) rect(width-width/20, height/5*4, width/30, 0-map(millis(), time+timeLimit, time, 0, height/5*3)+4);
+  if (countDownActive) rect(width-width/20, height/5*4, width/30, 0-map(millis(), time+TIME_LIMIT, time, 0, height/5*3)+4);
   else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
   image(UI[0], width-width/20, height/5, width/30, height/5*3);
   fill(255,0,0);
@@ -445,13 +471,6 @@ boolean contains(int[] arr, int key) {
   return false;
 }
 
-// float correctedPosX() {
-//   return (posX < visTilesX) ? posX + mapWidth : (posX > mapWidth-visTilesX) ? posX - mapWidth : posX;
-// }
-// float correctedPosY() {
-//   return (posY < visTilesY) ? posY + mapHeight : (posY > mapHeight-visTilesY) ? posY - mapHeight : posY;
-// }
-
 void drawKey(String keyToShow, String alt, int x, int y, boolean wide) {
   fill(0);
   if (wide) rect(x, y, 2*tileSize, tileSize, tileSize/8);
@@ -472,4 +491,27 @@ void banner(String text) {
   rect(width/6, height/1.22, width/6*4, height/10);
   fill(255);
   text(text, width/6, height/1.22, width/6*4, height/10);
+}
+
+PImage loadImagePng(String inFile) {
+  Image image = Toolkit.getDefaultToolkit().getImage(dataPath(inFile));
+  int [] data= new int [1];
+  PImage retval = createImage(1,1,ARGB);
+  try {
+    PixelGrabber grabber = new PixelGrabber(image, 0, 0, -1, -1, true);
+
+    if (grabber.grabPixels()) {
+      int w = grabber.getWidth();
+      int h = grabber.getHeight();
+      retval = createImage(w,h,ARGB);
+
+      data = (int[]) grabber.getPixels();
+      arrayCopy(data,retval.pixels);
+    }
+  }
+  catch (InterruptedException e1) {
+    println("Problem loading loadImagePng, defaulting to loadImage().  Error: " + e1);
+    return loadImage(inFile);
+  }
+  return retval;
 }

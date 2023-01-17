@@ -24,6 +24,7 @@ public class NPC {
     }
     if (dist(xPos, yPos, posX, posY) < 1 && frameCount%16 == int(randomSeed)) {
       health -= 34;
+      vignetteCounter = millis();
       if (health <= 0) {
         health = 0;
         ending = 0;
@@ -35,7 +36,7 @@ public class NPC {
   public void drawNPC() {
     x = xPos*tileSize-posX*tileSize+width/2-tileSize/2;
     y = yPos*tileSize-posY*tileSize+height/2-tileSize/2;
-    if (x < 0 || x > width || y < 0 || y > height) return;
+    if (x < -tileSize || x > width || y < -tileSize || y > height) return;
 
     if (death == 0) {
       checkPlayerInRadius();
