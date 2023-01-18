@@ -16,7 +16,7 @@ public class Bullet {
     
     checkCollision();
 
-    image(shot, x*tileSize-posX*tileSize+width/2-tileSize/2, y*tileSize-posY*tileSize+height/2-tileSize/2, tileSize/2, tileSize/2);
+    image(shot, x*tileSize-posX*tileSize+width/2-tileSize/4, y*tileSize-posY*tileSize+height/2-tileSize/4);
   }
 
   private void checkCollision() {

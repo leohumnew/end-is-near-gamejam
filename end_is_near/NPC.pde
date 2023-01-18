@@ -42,12 +42,12 @@ public class NPC {
       checkPlayerInRadius();
       updatePos();
       if (meelee) {
-          if(frameCount%16 > 7)image(npcMeelee[0], x, y, tileSize, tileSize);
-          else image(npcMeelee[1], x, y, tileSize, tileSize);
+          if(frameCount%16 > 7)image(npcMeelee[0], x, y);
+          else image(npcMeelee[1], x, y);
       }
     } else {
-      if (millis()-death < 150) image(npcMeelee[2], x, y, tileSize, tileSize);
-      else if (millis()-death < 400) image(npcMeelee[3], x, y, tileSize, tileSize);
+      if (millis()-death < 150) image(npcMeelee[2], x, y);
+      else if (millis()-death < 400) image(npcMeelee[3], x, y);
       else npcList.remove(this);
     }
   }

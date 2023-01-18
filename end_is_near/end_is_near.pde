@@ -71,57 +71,50 @@ void setup() {
 }
 
 void load() {
-  menu = loadImagePng("C1.png");
-  ground[0] = loadImagePng("Suelo0_0.png");
-  ground[0].resize(tileSize, tileSize);
-  ground[1] = loadImagePng("Suelo0_1.png");
-  ground[1].resize(tileSize, tileSize);
-  ground[2] = loadImagePng("Suelo0_2.png");
-  ground[2].resize(tileSize, tileSize);
-  wall[0] = loadImagePng("Pared0_0.png");
-  wall[0].resize(tileSize, tileSize);
-  wall[1] = loadImagePng("Pared0_1.png");
-  wall[1].resize(tileSize, tileSize);
-  wall[2] = loadImagePng("Pared0_2.png");
-  wall[2].resize(tileSize, tileSize);
-  topWall[0] = loadImagePng("Pared0_4.png");
-  topWall[1] = loadImagePng("Pared0_5.png");
-  topWallSide[0] = loadImagePng("Pared0_6.png");
-  topWallSide[1] = loadImagePng("Pared0_7.png");
-  stalagmite = loadImagePng("Estalagmita0.png");
-  player[0] = loadImagePng("Char1.png");
-  player[1] = loadImagePng("Char2.png");
-  player[2] = loadImagePng("Char3.png");
-  ceilHole = loadImagePng("Entr.png");
-  npcMeelee[0] = loadImagePng("Char7.png");
-  npcMeelee[1] = loadImagePng("Char8.png");
-  npcMeelee[2] = loadImagePng("Char9.png");
-  npcMeelee[3] = loadImagePng("Char10.png");
-  bg[0] = loadImagePng("BG0.png");
-  bg[1] = loadImagePng("BG1.png");
-  shot = loadImagePng("Shot.png");
+  menu = loadImagePng("C1.png", width, height);
+  ground[0] = loadImagePng("Suelo0_0.png", tileSize);
+  ground[1] = loadImagePng("Suelo0_1.png", tileSize);
+  ground[2] = loadImagePng("Suelo0_2.png", tileSize);
+  wall[0] = loadImagePng("Pared0_0.png", tileSize);
+  wall[1] = loadImagePng("Pared0_1.png", tileSize);
+  wall[2] = loadImagePng("Pared0_2.png", tileSize);
+  topWall[0] = loadImagePng("Pared0_4.png", tileSize);
+  topWall[1] = loadImagePng("Pared0_5.png", tileSize);
+  topWallSide[0] = loadImagePng("Pared0_6.png", tileSize);
+  topWallSide[1] = loadImagePng("Pared0_7.png", tileSize);
+  stalagmite = loadImagePng("Estalagmita0.png", tileSize);
+  player[0] = loadImagePng("Char1.png", tileSize);
+  player[1] = loadImagePng("Char2.png", tileSize);
+  player[2] = loadImagePng("Char3.png", tileSize);
+  ceilHole = loadImagePng("Entr.png", tileSize);
+  npcMeelee[0] = loadImagePng("Char7.png", tileSize);
+  npcMeelee[1] = loadImagePng("Char8.png", tileSize);
+  npcMeelee[2] = loadImagePng("Char9.png", tileSize);
+  npcMeelee[3] = loadImagePng("Char10.png", tileSize);
+  bg[0] = loadImagePng("BG0.png", tileSize);
+  bg[1] = loadImagePng("BG1.png", tileSize);
+  shot = loadImagePng("Shot.png", tileSize/2);
   items[0] = loadImagePng("Key.png");
-  vignette = loadImagePng("Vig.png");
-  vignette.resize(width, height);
-  door = loadImagePng("Pared0_EN.png");
+  vignette = loadImagePng("Vig.png", width, height);
+  door = loadImagePng("Pared0_EN.png", tileSize);
   UI[0] = loadImagePng("Frame1.png");
   UI[1] = loadImagePng("LifeFrame.png");
-  introScreens[0] = loadImagePng("E2.png");
-  introScreens[1] = loadImagePng("E3.png");
-  introScreens[2] = loadImagePng("E4.png");
-  introScreens[3] = loadImagePng("E5.png");
-  hitVignette = loadImagePng("HitVig.png");
+  introScreens[0] = loadImagePng("E2.png", width, height);
+  introScreens[1] = loadImagePng("E3.png", width, height);
+  introScreens[2] = loadImagePng("E4.png", width, height);
+  introScreens[3] = loadImagePng("E5.png", width, height);
+  hitVignette = loadImagePng("HitVig.png", width, height);
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
   level = -2;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
-  doorOpen = loadImagePng("Pared0_3.png");
+  doorOpen = loadImagePng("Pared0_3.png", tileSize);
   ship = loadImagePng("Nave.png");
-  endScreens[0] = loadImagePng("D0.png");
-  endScreens[1] = loadImagePng("D1.png");
-  endScreens[2] = loadImagePng("E9.png");
+  endScreens[0] = loadImagePng("D0.png", width, height);
+  endScreens[1] = loadImagePng("D1.png", width, height);
+  endScreens[2] = loadImagePng("E9.png", width, height);
 }
 
 void draw() {
@@ -156,7 +149,7 @@ void draw() {
     textSize(50);
     //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
     if (ending == 3) {
-      if (millis()-delayInt > 3000 && transitioningTo == 0) {
+      if (millis()-delayInt > 2500 && transitioningTo == 0) {
         if (counter >= 3) {
           changeScene(1);
         } else {
@@ -185,8 +178,8 @@ void draw() {
     rect(0, 0, width, height);
     stroke(255);
   }
-  //fill(255);
-  //text(frameRate, 100,100);
+  fill(255);
+  text(frameRate, 100,100);
 }
 
 //MAP FUNCTIONS ------------------
@@ -326,11 +319,11 @@ void drawMap() {
       } else if (currentTile==1 && (getMapPos(i+1,j) != 1 || getMapPos(i,j+1) != 1 || getMapPos(i-1,j) != 1 || getMapPos(i,j-1) != 1 || getMapPos(i+1,j+1) != 1 || getMapPos(i-1,j-1) != 1 || getMapPos(i+1,j-1) != 1 || getMapPos(i-1,j+1) != 1)) {
         image(wall[floor(posSeed(3, i+j))], tilePosX, tilePosY);
       } else if (currentTile==2) {
-        image(topWall[floor(posSeed(2, i+j))], tilePosX, tilePosY, tileSize, tileSize);
+        image(topWall[floor(posSeed(2, i+j))], tilePosX, tilePosY);
       } else if (currentTile==3) {
-        image(stalagmite, tilePosX, tilePosY, tileSize, tileSize);
+        image(stalagmite, tilePosX, tilePosY);
       } else if (currentTile==4) {
-        image(topWallSide[floor(posSeed(2, i+j))], tilePosX, tilePosY, tileSize, tileSize);
+        image(topWallSide[floor(posSeed(2, i+j))], tilePosX, tilePosY);
       } else if (currentTile==5 && getMapPos(i, j+2) == 5 && getMapPos(i+2, j) == 5) {
         image(ceilHole, tilePosX, tilePosY, tileSize*3, tileSize*3);
       } else if (currentTile==8) {
@@ -340,7 +333,7 @@ void drawMap() {
           image(door, tilePosX, tilePosY, tileSize, tileSize);
         }
       } else if (currentTile == 1 && (contains(textureTiles, i*j) || contains(textureTiles, int(i*j/2)))) {
-        image(bg[floor(posSeed(2, i*j))], tilePosX, tilePosY, tileSize, tileSize);
+        image(bg[floor(posSeed(2, i*j))], tilePosX, tilePosY);
       } else if (currentTile == 9) {
         tilePosX = (i-5)*tileSize-posX*tileSize+width/2;
         tilePosY = (j-8)*tileSize-posY*tileSize+height/2;
@@ -493,8 +486,7 @@ void banner(String text) {
   text(text, width/6, height/1.22, width/6*4, height/10);
 }
 
-PImage loadImagePng(String inFile) {
-  Image image = Toolkit.getDefaultToolkit().getImage(dataPath(inFile));
+PImage loadImagePngCpyPx(Image image, String inFile) {
   int [] data= new int [1];
   PImage retval = createImage(1,1,ARGB);
   try {
@@ -515,3 +507,6 @@ PImage loadImagePng(String inFile) {
   }
   return retval;
 }
+PImage loadImagePng(String inFile, int w, int h) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(w, h, Image.SCALE_DEFAULT), inFile); }
+PImage loadImagePng(String inFile, int size) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), inFile); }
+PImage loadImagePng(String inFile) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)), inFile); }
