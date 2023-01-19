@@ -15,6 +15,7 @@ public class Pickup {
   void checkPickup() {
     if (dist(x, y, posX, posY) < 1) {
       if (item >= 0) {
+        itemGet.play();
         inventory[2] = 0;
         itemList.remove(this);
       } else if (item == -1) {

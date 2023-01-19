@@ -3,7 +3,7 @@ import processing.sound.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.PixelGrabber;
-SoundFile OST, breakRock, shoot;
+SoundFile OST, breakRock, shoot, itemGet;
 
 //Save variables
 final String fileName = "saveInfo.txt";
@@ -11,8 +11,8 @@ String[] saveData = new String [2];
 
 //Map
 int mapWidth = 65, mapHeight = 50;
-int[][][] maps = new int[3][mapWidth][mapHeight];
-int map[][] = new int[mapWidth][mapHeight];
+ArrayList<int[][]> maps = new ArrayList<int[][]>(5);
+int[][] activeMap;
 MapGenerator mapGenerator = new MapGenerator();
 int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
@@ -77,6 +77,9 @@ void setup() {
 }
 
 void load() {
+  for (int i = 0; i < 5; i++) {
+    maps.add(new int[1][1]);
+  }
   pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
   textFont(pixelatedFont);
   textJson = loadJSONObject(saveData[1] + "_Text.json");
@@ -121,6 +124,7 @@ void load() {
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
+  itemGet = new SoundFile(this, "ItemGet.wav");
   level = -2;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
@@ -203,14 +207,14 @@ int getMapPos(int x, int y) {
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  return map[x][y];
+  return activeMap[x][y];
 }
 void setMapPos(int x, int y, int value) {
   if (x < 0) x = mapWidth+x;
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  if(map[x][y] != 5)map[x][y] = value;
+  if(activeMap[x][y] != 5)activeMap[x][y] = value;
 }
 
 //PLAYER FUNCTIONS ------------------
@@ -425,6 +429,7 @@ void changeScene(int n) {
 }
 //-3 = cinematic, -2 = menu, -1 = loading, 1 = main floor, 2 = second floor, 3 = third floor, 4 = spaceship
 void teleport(int num) {
+  if (level > 0) maps.set(level, activeMap);
   transitioningTo = 0;
   switch (num) {
     case -3:
@@ -438,7 +443,7 @@ void teleport(int num) {
       health = 100;
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;
-      map = mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0);
+      maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
       for (int i = 0; i < textureTiles.length; i++) {
         textureTiles[i] = int(random(0, mapWidth*mapHeight));
       }
@@ -447,15 +452,15 @@ void teleport(int num) {
       counter = -1;
     break;
     case 4:
-      map = new int[30][20];
       posX = 15;
       posY = 10;
-      map = mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1);
+      maps.set(4, mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1));
       countDownActive = false;
       delayInt = millis();
       level = 4;
     break;	
   }
+  if (num > 0) activeMap = maps.get(num);
 }
 
 //SAVE INFO -------------------------
