@@ -188,7 +188,7 @@ void draw() {
     stroke(255);
   }
   fill(255);
-  text(dispDens, 100,100);
+  text(frameRate, 100,100);
 }
 
 //MAP FUNCTIONS ------------------
