@@ -3,15 +3,16 @@ import processing.sound.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.PixelGrabber;
-SoundFile OST, breakRock, shoot;
+SoundFile OST, breakRock, shoot, itemGet;
 
 //Save variables
 final String fileName = "saveInfo.txt";
-String[] saveData = new String [1];
+String[] saveData = new String [2];
 
 //Map
 int mapWidth = 65, mapHeight = 50;
-int map[][] = new int[mapWidth][mapHeight];
+ArrayList<int[][]> maps = new ArrayList<int[][]>(5);
+int[][] activeMap;
 MapGenerator mapGenerator = new MapGenerator();
 int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
@@ -19,7 +20,7 @@ int visTilesX, visTilesY;
 int fadeStart = 0, transitioningTo = 0;
 
 //Images
-PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu;
+PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu, loading;
 PImage[] player = new PImage[3];
 PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
@@ -43,8 +44,9 @@ boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
 int[] inventory;
 
-String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's SPeace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way, SPeace disturbed", "Earth's end was arriving."};
-String[] endText = {"And thus was Earth's only chance lost, but no one cared anymore; truth was, Earth's last hope was long gone.", "Though he didn't suffocate, he proved himself useless, once more; I should have definitely gone with the Space dog.", "*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know."};
+JSONObject textJson;
+String[] introText;
+String[] endText;
 
 //Objects
 ArrayList<NPC> npcList;
@@ -68,14 +70,21 @@ void setup() {
   textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-  
-  pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
-  textFont(pixelatedFont);
+
   //load images
+  loading = loadImagePng("Loading.png", tileSize*8, tileSize*4);
   thread("load");
 }
 
 void load() {
+  for (int i = 0; i < 5; i++) {
+    maps.add(new int[1][1]);
+  }
+  pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
+  textFont(pixelatedFont);
+  textJson = loadJSONObject(saveData[1] + "_Text.json");
+  introText = textJson.getJSONArray("intro").getStringArray();
+  endText = (String[])textJson.getJSONArray("endings").getStringArray();
   menu = loadImagePng("C1.png", width, height);
   ground[0] = loadImagePng("Suelo0_0.png", tileSize);
   ground[1] = loadImagePng("Suelo0_1.png", tileSize);
@@ -115,6 +124,7 @@ void load() {
   breakRock = new SoundFile(this, "Break.wav");
   breakRock.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
+  itemGet = new SoundFile(this, "ItemGet.wav");
   level = -2;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
@@ -151,7 +161,7 @@ void draw() {
     //shader(vignetteShader);
     drawUI();
   } else if (level == -1) {
-    text("Loading...", width/2, height/2);
+    image(loading, width-tileSize*8, height-tileSize*4);
   } else if (level == -2) {
     image(menu, 0, 0, width, height);
   } else if (level == -3) {
@@ -197,14 +207,14 @@ int getMapPos(int x, int y) {
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  return map[x][y];
+  return activeMap[x][y];
 }
 void setMapPos(int x, int y, int value) {
   if (x < 0) x = mapWidth+x;
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  if(map[x][y] != 5)map[x][y] = value;
+  if(activeMap[x][y] != 5)activeMap[x][y] = value;
 }
 
 //PLAYER FUNCTIONS ------------------
@@ -419,6 +429,7 @@ void changeScene(int n) {
 }
 //-3 = cinematic, -2 = menu, -1 = loading, 1 = main floor, 2 = second floor, 3 = third floor, 4 = spaceship
 void teleport(int num) {
+  if (level > 0) maps.set(level, activeMap);
   transitioningTo = 0;
   switch (num) {
     case -3:
@@ -432,7 +443,7 @@ void teleport(int num) {
       health = 100;
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;
-      map = mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0);
+      maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
       for (int i = 0; i < textureTiles.length; i++) {
         textureTiles[i] = int(random(0, mapWidth*mapHeight));
       }
@@ -441,20 +452,21 @@ void teleport(int num) {
       counter = -1;
     break;
     case 4:
-      map = new int[30][20];
       posX = 15;
       posY = 10;
-      map = mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1);
+      maps.set(4, mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1));
       countDownActive = false;
       delayInt = millis();
       level = 4;
     break;	
   }
+  if (num > 0) activeMap = maps.get(num);
 }
 
 //SAVE INFO -------------------------
 void createSave() {
   saveData[0] = "1";
+  saveData[1] = "en";
 }
 
 void loadSave() {
