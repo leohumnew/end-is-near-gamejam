@@ -7,10 +7,11 @@ SoundFile OST, breakRock, shoot;
 
 //Save variables
 final String fileName = "saveInfo.txt";
-String[] saveData = new String [1];
+String[] saveData = new String [2];
 
 //Map
 int mapWidth = 65, mapHeight = 50;
+int[][][] maps = new int[3][mapWidth][mapHeight];
 int map[][] = new int[mapWidth][mapHeight];
 MapGenerator mapGenerator = new MapGenerator();
 int[] textureTiles = new int[mapWidth];
@@ -19,7 +20,7 @@ int visTilesX, visTilesY;
 int fadeStart = 0, transitioningTo = 0;
 
 //Images
-PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu;
+PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu, loading;
 PImage[] player = new PImage[3];
 PImage[] topWall = new PImage[2];
 PImage[] ground = new PImage[3];
@@ -43,8 +44,9 @@ boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
 int[] inventory;
 
-String[] introText = {"It was a star-snowing morning like any other, shivering space-cold furthermore", "'till as earth's SPeace patrol was to move on,  galactic tea-time was come.", "So was the AI British unit enjoying its tea warm, when a big stone was set in its way, SPeace disturbed", "Earth's end was arriving."};
-String[] endText = {"And thus was Earth's only chance lost, but no one cared anymore; truth was, Earth's last hope was long gone.", "Though he didn't suffocate, he proved himself useless, once more; I should have definitely gone with the Space dog.", "*Ehem* *ehem*: As he stubbled upon a solution, he pointed the weapon and shot; bullseye on the target: he was always my favorite, you know."};
+JSONObject textJson;
+String[] introText;
+String[] endText;
 
 //Objects
 ArrayList<NPC> npcList;
@@ -68,14 +70,18 @@ void setup() {
   textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-  
-  pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
-  textFont(pixelatedFont);
+
   //load images
+  loading = loadImagePng("Loading.png", tileSize*8, tileSize*4);
   thread("load");
 }
 
 void load() {
+  pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
+  textFont(pixelatedFont);
+  textJson = loadJSONObject(saveData[1] + "_Text.json");
+  introText = textJson.getJSONArray("intro").getStringArray();
+  endText = (String[])textJson.getJSONArray("endings").getStringArray();
   menu = loadImagePng("C1.png", width, height);
   ground[0] = loadImagePng("Suelo0_0.png", tileSize);
   ground[1] = loadImagePng("Suelo0_1.png", tileSize);
@@ -151,7 +157,7 @@ void draw() {
     //shader(vignetteShader);
     drawUI();
   } else if (level == -1) {
-    text("Loading...", width/2, height/2);
+    image(loading, width-tileSize*8, height-tileSize*4);
   } else if (level == -2) {
     image(menu, 0, 0, width, height);
   } else if (level == -3) {
@@ -455,6 +461,7 @@ void teleport(int num) {
 //SAVE INFO -------------------------
 void createSave() {
   saveData[0] = "1";
+  saveData[1] = "en";
 }
 
 void loadSave() {
