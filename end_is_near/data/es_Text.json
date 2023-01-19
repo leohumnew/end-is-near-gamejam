@@ -9,6 +9,16 @@
         "\"Y así fue como la Tierra perdió su única esperanza. Aún así, nadie se sorprendió: su última oportunidad se perdió desde que fuiste nuestra única esperanza\"",
         "\"Aunque esta vez no se asfixió, de nuevo demostró su incompetencia; ojalá me hubiera decidido por el perro Es-paz-cial... hubiera sido mejor, sin duda.\"",
         "\"*Ejem* *ejem*: Y así fue como Fred fue encontrado por una solución: apuntó el arma, y tras disparar, nada quedaba de aquella piedra, que estrellar; Siempre fue mi favorito, la verdad.\"",
-        "\"Menuda forma de morir... debí haberlo visto venir, de todas maneras; que de entre todas ellas encontrarías la peor y con diferencia.\""
+        "\"Menuda forma de morir... debí haberlo visto venir, de todas maneras; que de todas ellas encontrarías la peor y con diferencia.\""
+    ],
+    "UI": [
+        "\"El destino de la Tierra depende de ti, cuidado con los Tenshi\"",
+        "Está cerrado...",
+        "ARRIBA",
+        "DERECHA",
+        "ABAJO",
+        "IZQUIERDA",
+        "Disparar",
+        "Cavar"   
     ]
 }
