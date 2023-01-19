@@ -10,7 +10,7 @@ final String fileName = "saveInfo.txt";
 String[] saveData = new String [2];
 
 //Map
-int mapWidth = 65, mapHeight = 50;
+int mapWidth, mapHeight;
 ArrayList<int[][]> maps = new ArrayList<int[][]>(5);
 int[][] activeMap;
 MapGenerator mapGenerator = new MapGenerator();
@@ -235,6 +235,9 @@ void keyPressed() {
       countDownActive = true;
       time = millis();
     }
+    if (key == ' '){
+      changeScene(2);
+    }
     if (key == 'w' || key == 'W' || keyCode == UP) {
       speedY = -0.1;
     } else if (key == 's' || key == 'S' || keyCode == DOWN) {
@@ -441,6 +444,8 @@ void teleport(int num) {
       level = -1;
       inventory = new int[]{1,2,-1};
       health = 100;
+      mapWidth = 65;
+      mapHeight = 50;
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;
       maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
@@ -450,6 +455,16 @@ void teleport(int num) {
       npcList = mapGenerator.getNPCs();
       level = 1;
       counter = -1;
+    break;
+    case 2:
+      level = 2;
+      mapWidth = ceil(mapWidth/4*3);
+      mapHeight = ceil(mapHeight/4*3);
+      maps.set(2, mapGenerator.mapGenerate(5, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
+      for (int i = 0; i < textureTiles.length; i++) {
+        textureTiles[i] = int(random(0, mapWidth*mapHeight));
+      }
+      npcList = mapGenerator.getNPCs();
     break;
     case 4:
       posX = 15;
