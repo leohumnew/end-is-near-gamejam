@@ -107,7 +107,7 @@ void load() {
   npcMeelee[3] = loadImagePng("Char10.png", tileSize);
   bg[0] = loadImagePng("BG0.png", tileSize);
   bg[1] = loadImagePng("BG1.png", tileSize);
-  shot = loadImagePng("Shot.png", tileSize/2);
+  shot = loadImagePng("Shot.png", tileSize/4);
   items[0] = loadImagePng("Key.png", tileSize);
   items[1] = loadImagePng("Item4.png", tileSize);
   items[2] = loadImagePng("Item1.png", tileSize);
@@ -460,7 +460,7 @@ void teleport(int num) {
       level = 2;
       mapWidth = ceil(mapWidth/4*3);
       mapHeight = ceil(mapHeight/4*3);
-      maps.set(2, mapGenerator.mapGenerate(5, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
+      maps.set(2, mapGenerator.mapGenerate(2, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
       for (int i = 0; i < textureTiles.length; i++) {
         textureTiles[i] = int(random(0, mapWidth*mapHeight));
       }
