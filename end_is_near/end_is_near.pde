@@ -1,3 +1,4 @@
+//import processing.javafx.*;
 import processing.sound.*;
 import java.awt.Image;
 import java.awt.Toolkit;
@@ -28,10 +29,11 @@ PImage[] npcMeelee = new PImage[4];
 PImage[] bg = new PImage[2];
 PImage[] endScreens = new PImage[3];
 PImage[] introScreens = new PImage[4];
-PImage[] items = new PImage[1];
+PImage[] items = new PImage[3];
 PImage[] UI = new PImage[2];
 
 PFont pixelatedFont;
+//PShader vignetteShader;
 
 //Player variables
 final int TIME_LIMIT = 60000;
@@ -52,13 +54,16 @@ ArrayList<Pickup> itemList = new ArrayList<Pickup>();
 //SETTINGS FUNCTION -----------------
 void settings() {
   loadSave();
-  if (int(saveData[0])==1)fullScreen();
+  if (int(saveData[0])==1){
+    fullScreen();
+    //else size(displayWidth, displayHeight, P2D);
+  }
   else size(1280, 720);
-  //((PGraphicsOpenGL)g).textureSampling(2);
   noSmooth();
 }
 
 void setup() {
+  //((PGraphicsOpenGL)g).textureSampling(2);
   frameRate(60);
   textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
@@ -94,8 +99,11 @@ void load() {
   bg[0] = loadImagePng("BG0.png", tileSize);
   bg[1] = loadImagePng("BG1.png", tileSize);
   shot = loadImagePng("Shot.png", tileSize/2);
-  items[0] = loadImagePng("Key.png");
+  items[0] = loadImagePng("Key.png", tileSize);
+  items[1] = loadImagePng("Item4.png", tileSize);
+  items[2] = loadImagePng("Item1.png", tileSize);
   vignette = loadImagePng("Vig.png", width, height);
+  //vignetteShader = loadShader("Vignette.glsl");
   door = loadImagePng("Pared0_EN.png", tileSize);
   UI[0] = loadImagePng("Frame1.png");
   UI[1] = loadImagePng("LifeFrame.png");
@@ -140,6 +148,7 @@ void draw() {
     }
     drawPlayer();
     image(vignette, 0, 0);
+    //shader(vignetteShader);
     drawUI();
   } else if (level == -1) {
     text("Loading...", width/2, height/2);
@@ -156,11 +165,11 @@ void draw() {
           changeScene(-3);
         }
       }
-      image(introScreens[counter], 0, 0, width, height);
+      image(introScreens[counter], 0, 0);
       fill(255);
       text(introText[counter], width/16, height/5*3.8, width/16*14, height/5);
     } else {
-      image(endScreens[ending], 0, 0, width, height);
+      image(endScreens[ending], 0, 0);
       fill(255);
       text(endText[ending], width/16, height/5*3.7, width/16*14, height/5);
       textSize(30);
@@ -179,7 +188,7 @@ void draw() {
     stroke(255);
   }
   fill(255);
-  text(frameRate, 100,100);
+  text(dispDens, 100,100);
 }
 
 //MAP FUNCTIONS ------------------
@@ -378,7 +387,14 @@ void drawUI() {
   //Inventory
   for (int i = 0; i < inventory.length; i++) {
     if (inventory[i] != -1) {
-      image(items[i], width/20+tileSize*2*i, height-tileSize*3, tileSize*2, tileSize*2);
+      image(items[inventory[i]], width/20+tileSize*2*i, height-tileSize*3);
+      if (inventory[i] == 1) {
+        textSize(10);
+        text("Left Click", width/20+tileSize*2*i, height-tileSize*2);
+      } else if (inventory[i] == 2) {
+        textSize(10);
+        text("Right Click", width/20+tileSize*2*i, height-tileSize*2);
+      }
     }
   }
 
@@ -412,7 +428,7 @@ void teleport(int num) {
     break;
     case 1:
       level = -1;
-      inventory = new int[]{-1};
+      inventory = new int[]{1,2,-1};
       health = 100;
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;

@@ -9,16 +9,16 @@ public class Pickup {
 
   public void update() {
       checkPickup();
-      if(item >= 0)image(items[item], x*tileSize-posX*tileSize+width/2, y*tileSize-posY*tileSize+height/2, tileSize, tileSize);
+      if(item >= 0)image(items[item], x*tileSize-posX*tileSize+width/2, y*tileSize-posY*tileSize+height/2);
   }
 
   void checkPickup() {
     if (dist(x, y, posX, posY) < 1) {
       if (item >= 0) {
-        inventory[0] = 0;
+        inventory[2] = 0;
         itemList.remove(this);
       } else if (item == -1) {
-        if (inventory[0] == 0) changeScene(4);
+        if (inventory[2] == 0) changeScene(4);
         else {
           banner("Locked...");
         }
