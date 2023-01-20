@@ -216,10 +216,10 @@ public class MapGenerator {
 
       //Generate rooms
       for (int i = 0; i < roomNum; i++) {
-        int room = int(random(0, roomTemplates.length));
-        int x, y;
+        int room, x, y;
 
         do {
+          room = int(random(0, roomTemplates.length));
           x = int(random(1, mapWidth-roomTemplates[room].length));
           y = int(random(1, mapHeight-roomTemplates[room][0].length));
         } while (overlapsOldRoom(x, y, roomTemplates[room].length, roomTemplates[room][0].length));

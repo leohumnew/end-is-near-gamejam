@@ -58,7 +58,7 @@ void settings() {
   loadSave();
   if (int(saveData[0])==1){
     fullScreen();
-    //else size(displayWidth, displayHeight, P2D);
+    //size(displayWidth, displayHeight, P2D);
   }
   else size(1280, 720);
   noSmooth();
@@ -97,6 +97,7 @@ void load() {
   topWallSide[0] = loadImagePng("Pared0_6.png", tileSize);
   topWallSide[1] = loadImagePng("Pared0_7.png", tileSize);
   stalagmite = loadImagePng("Estalagmita0.png", tileSize);
+  floorDiggable = loadImagePng("Suelo0_T.png", tileSize);
   player[0] = loadImagePng("Char1.png", tileSize);
   player[1] = loadImagePng("Char2.png", tileSize);
   player[2] = loadImagePng("Char3.png", tileSize);
@@ -114,8 +115,8 @@ void load() {
   vignette = loadImagePng("Vig.png", width, height);
   //vignetteShader = loadShader("Vignette.glsl");
   door = loadImagePng("Pared0_EN.png", tileSize);
-  UI[0] = loadImagePng("Frame1.png");
-  UI[1] = loadImagePng("LifeFrame.png");
+  UI[0] = loadImagePng("Frame1.png", tileSize/4, tileSize*4);
+  UI[1] = loadImagePng("LifeFrame.png", tileSize, tileSize*2);
   introScreens[0] = loadImagePng("E2.png", width, height);
   introScreens[1] = loadImagePng("E3.png", width, height);
   introScreens[2] = loadImagePng("E4.png", width, height);
@@ -129,7 +130,7 @@ void load() {
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
   doorOpen = loadImagePng("Pared0_3.png", tileSize);
-  ship = loadImagePng("Nave.png");
+  ship = loadImagePng("Nave.png", tileSize*6, tileSize*9);
   endScreens[0] = loadImagePng("D0.png", width, height);
   endScreens[1] = loadImagePng("D1.png", width, height);
   endScreens[2] = loadImagePng("E9.png", width, height);
@@ -178,6 +179,8 @@ void draw() {
       image(introScreens[counter], 0, 0);
       fill(255);
       text(introText[counter], width/16, height/5*3.8, width/16*14, height/5);
+      textSize(30);
+      text("SPACE to skip", 0, height/5*4.7, width, height/20);
     } else {
       image(endScreens[ending], 0, 0);
       fill(255);
@@ -235,7 +238,7 @@ void keyPressed() {
       countDownActive = true;
       time = millis();
     }
-    if (key == ' '){
+    if (level == 1 && key == ' '){
       changeScene(2);
     }
     if (key == 'w' || key == 'W' || keyCode == UP) {
@@ -247,7 +250,7 @@ void keyPressed() {
     } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
       speedX = 0.1;
     }
-  } else if (level == -3 && ending != 3) {
+  } else if (level == -3) {
     if (key == ' ') {
       changeScene(1);
     }
@@ -350,17 +353,17 @@ void drawMap() {
         image(ceilHole, tilePosX, tilePosY, tileSize*3, tileSize*3);
       } else if (currentTile==8) {
         if (inventory[0] == 0) {
-          image(doorOpen, tilePosX, tilePosY, tileSize, tileSize);
+          image(doorOpen, tilePosX, tilePosY);
         } else {
-          image(door, tilePosX, tilePosY, tileSize, tileSize);
+          image(door, tilePosX, tilePosY);
         }
       } else if (currentTile == 1 && (contains(textureTiles, i*j) || contains(textureTiles, int(i*j/2)))) {
         image(bg[floor(posSeed(2, i*j))], tilePosX, tilePosY);
       } else if (currentTile == 9) {
         tilePosX = (i-5)*tileSize-posX*tileSize+width/2;
         tilePosY = (j-8)*tileSize-posY*tileSize+height/2;
-        image(ship, tilePosX, tilePosY, tileSize*6, tileSize*9);
-      }
+        image(ship, tilePosX, tilePosY);
+      } else if (currentTile == 10) image(floorDiggable, tilePosX, tilePosY);
       
       i = iOriginal;
       j = jOriginal;
@@ -529,27 +532,25 @@ void banner(String text) {
   text(text, width/6, height/1.22, width/6*4, height/10);
 }
 
-PImage loadImagePngCpyPx(Image image, String inFile) {
-  int [] data= new int [1];
-  PImage retval = createImage(1,1,ARGB);
+PImage[] loadImagePngCpyPx(Image image, String inFile, int w, int h, int xNum, int yNum) {
+  PImage[] retval = new PImage[xNum*yNum];
+  for (int i = 0; i < xNum*yNum; i++) {
+    retval[i] = createImage(w,h,ARGB);
+  }
   try {
-    PixelGrabber grabber = new PixelGrabber(image, 0, 0, -1, -1, true);
-
-    if (grabber.grabPixels()) {
-      int w = grabber.getWidth();
-      int h = grabber.getHeight();
-      retval = createImage(w,h,ARGB);
-
-      data = (int[]) grabber.getPixels();
-      arrayCopy(data,retval.pixels);
+    for (int i = 0; i < xNum; i++) {
+      for (int j = 0; j < yNum; j++) {
+        PixelGrabber grabber = new PixelGrabber(image, w/xNum*i, h/yNum*j, (w/xNum*(i+1)), (h/yNum*(j+1)), retval[i].pixels, 0, w);
+        grabber.grabPixels();
+      }
     }
   }
   catch (InterruptedException e1) {
     println("Problem loading loadImagePng, defaulting to loadImage().  Error: " + e1);
-    return loadImage(inFile);
+    exit();
   }
   return retval;
 }
-PImage loadImagePng(String inFile, int w, int h) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(w, h, Image.SCALE_DEFAULT), inFile); }
-PImage loadImagePng(String inFile, int size) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), inFile); }
-PImage loadImagePng(String inFile) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)), inFile); }
+PImage[] loadImagePng(String inFile, int size, int xNum, int yNum) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), inFile, size, size, xNum, yNum); }
+PImage loadImagePng(String inFile, int w, int h) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(w, h, Image.SCALE_DEFAULT), inFile, w, h, 1, 1)[0]; }
+PImage loadImagePng(String inFile, int size) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), inFile, size, size, 1, 1)[0]; }
