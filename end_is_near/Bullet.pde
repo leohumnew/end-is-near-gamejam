@@ -20,7 +20,7 @@ public class Bullet {
   }
 
   private void checkCollision() {
-    if (getMapPos(floor(x),floor(y)) == 1 || getMapPos(floor(x),floor(y)) == 2) {
+    if (getMapPos(x, y) == 1 || getMapPos(x, y) == 2) {
       bulletList.remove(this);
     }
     for (int i = 0; i < npcList.size(); i++) {

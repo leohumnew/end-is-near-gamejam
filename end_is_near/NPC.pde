@@ -12,11 +12,18 @@ public class NPC {
   }
 
   void updatePos() {
-    if (playerInRadius && dist(xPos, yPos, posX, posY) > 0.5) {
-      if (xPos > posX && contains(new int[]{0,5}, getMapPos(floor(xPos-0.4-npcSpeedX),floor(yPos+0.45))) && !contains(new int[]{1,2}, getMapPos(floor(xPos-0.4-npcSpeedX),floor(yPos-0.2)))) xPos -= npcSpeedX;
-      else if (xPos < posX && contains(new int[]{0,5}, getMapPos(floor(xPos+0.4+npcSpeedX),floor(yPos+0.45))) && !contains(new int[]{1,2}, getMapPos(floor(xPos+0.4+npcSpeedX),floor(yPos-0.2)))) xPos += npcSpeedX;
-      if (yPos > posY && contains(new int[]{0,5}, getMapPos(floor(xPos+0.4),floor(yPos-npcSpeedY))) && contains(new int[]{0,5}, getMapPos(floor(xPos-0.4),floor(yPos-0.45-npcSpeedY)))) yPos -= npcSpeedY;
-      else if (yPos < posY && contains(new int[]{0,5}, getMapPos(floor(xPos+0.4),floor(yPos+0.45+npcSpeedY))) && contains(new int[]{0,5}, getMapPos(floor(xPos-0.4),floor(yPos+npcSpeedY)))) yPos += npcSpeedY;
+    if (playerInRadius && dist(xPos, yPos, posX, posY) > 0.05*randomSeed) {
+      if (isPlayerRight()) {
+        if (contains(WALKABLE, getMapPos(xPos+0.4+npcSpeedX, yPos+0.45)) && !contains(new int[]{1,2}, getMapPos(xPos+0.4+npcSpeedX, yPos-0.3))) xPos += npcSpeedX;
+      } else {
+        if (contains(WALKABLE, getMapPos(xPos-0.4-npcSpeedX, yPos+0.45)) && !contains(new int[]{1,2}, getMapPos(xPos-0.4-npcSpeedX, yPos-0.3))) xPos -= npcSpeedX;
+      }
+      if (isPlayerBelow()) {
+        if (contains(WALKABLE, getMapPos(xPos+0.4, yPos+0.45+npcSpeedY)) && contains(WALKABLE, getMapPos(xPos-0.4, yPos+0.45+npcSpeedY))) yPos += npcSpeedY;
+      } else {
+        if (contains(WALKABLE, getMapPos(xPos+0.4, yPos-npcSpeedY)) && contains(WALKABLE, getMapPos(xPos-0.4, yPos-npcSpeedY))) yPos -= npcSpeedY;
+      }
+
       if (xPos < 0) xPos = mapWidth-0.05;
       else if (xPos >= mapWidth) xPos = 0;
       if (yPos < 0) yPos = mapHeight-0.05;
@@ -33,9 +40,24 @@ public class NPC {
     }
   }
 
+  boolean isPlayerRight() {
+    if (((xPos < posX) ? mapWidth+xPos : xPos) - posX > posX - ((xPos > posX) ? xPos-mapWidth : xPos)) return true;
+    return false;
+  }
+  boolean isPlayerBelow() {
+    if (((yPos < posY) ? mapHeight+yPos : yPos) - posY > posY - ((yPos > posY) ? yPos-mapHeight : yPos)) return true;
+    return false;
+  }
+
   public void drawNPC() {
-    x = xPos*tileSize-posX*tileSize+width/2-tileSize/2;
-    y = yPos*tileSize-posY*tileSize+height/2-tileSize/2;
+    if (abs(xPos+mapWidth-posX) < abs(xPos-posX)) x = tileSize*(xPos+mapWidth-posX) + width/2 - tileSize/2;
+    else if (abs(xPos-mapWidth-posX) < abs(xPos-posX)) x = tileSize*(xPos-mapWidth-posX) + width/2 - tileSize/2;
+    else x = tileSize*(xPos-posX) + width/2 - tileSize/2;
+
+    if (abs(yPos+mapHeight-posY) < abs(yPos-posY)) y = tileSize*(yPos+mapHeight-posY) + height/2 - tileSize/2;
+    else if (abs(yPos-mapHeight-posY) < abs(yPos-posY)) y = tileSize*(yPos-mapHeight-posY) + height/2 - tileSize/2;
+    else y = tileSize*(yPos-posY) + height/2 - tileSize/2;
+
     if (x < -tileSize || x > width || y < -tileSize || y > height) return;
 
     if (death == 0) {
@@ -53,10 +75,6 @@ public class NPC {
   }
 
   void checkPlayerInRadius() {
-    if (dist(xPos, yPos, xPos, yPos) < 8) {
-      playerInRadius = true;
-    } else {
-      playerInRadius = false;
-    }
+    playerInRadius = (dist(xPos, yPos, xPos, yPos) < 8) ? true : false;
   }
 }

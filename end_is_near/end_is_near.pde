@@ -3,7 +3,7 @@ import processing.sound.*;
 import java.awt.Image;
 import java.awt.Toolkit;
 import java.awt.image.PixelGrabber;
-SoundFile OST, breakRock, shoot, itemGet;
+SoundFile OST, digSound, shoot, itemGet;
 
 //Save variables
 final String fileName = "saveInfo.txt";
@@ -18,6 +18,7 @@ int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
 int visTilesX, visTilesY;
 int fadeStart = 0, transitioningTo = 0;
+final int[] NON_DIGGABLE = {0, 8}, WALKABLE = {0, 5, 10}; 
 
 //Images
 PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu, loading;
@@ -38,7 +39,7 @@ PFont pixelatedFont;
 
 //Player variables
 final int TIME_LIMIT = 60000;
-float posX, posY, speedX = 0, speedY = 0;
+float posX, posY, speedX = 0, speedY = 0, movSpeed = 0.1;
 int time, health, delayInt, vignetteCounter;
 boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
@@ -122,8 +123,8 @@ void load() {
   introScreens[2] = loadImagePng("E4.png", width, height);
   introScreens[3] = loadImagePng("E5.png", width, height);
   hitVignette = loadImagePng("HitVig.png", width, height);
-  breakRock = new SoundFile(this, "Break.wav");
-  breakRock.amp(0.5);
+  digSound = new SoundFile(this, "Break.wav");
+  digSound.amp(0.5);
   shoot = new SoundFile(this, "Shoot1.wav");
   itemGet = new SoundFile(this, "ItemGet.wav");
   level = -2;
@@ -205,28 +206,32 @@ void draw() {
 }
 
 //MAP FUNCTIONS ------------------
-int getMapPos(int x, int y) {
+int getMapPos(float x, float y) {
+  x = floor(x);
+  y = floor(y);
   if (x < 0) x = mapWidth+x;
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  return activeMap[x][y];
+  return activeMap[int(x)][int(y)];
 }
-void setMapPos(int x, int y, int value) {
+void setMapPos(float x, float y, int value) {
+  x = floor(x);
+  y = floor(y);
   if (x < 0) x = mapWidth+x;
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  if(activeMap[x][y] != 5)activeMap[x][y] = value;
+  if(activeMap[int(x)][int(y)] != 5) activeMap[int(x)][int(y)] = value;
 }
 
 //PLAYER FUNCTIONS ------------------
 void move() {
   //collision
-  if (speedX > 0 && contains(new int[]{0,5}, getMapPos(floor(posX+0.4+speedX),floor(posY+0.45))) && !contains(new int[]{1}, getMapPos(floor(posX+0.4+speedX),floor(posY)))) posX += speedX;
-  else if (speedX < 0 && contains(new int[]{0,5}, getMapPos(floor(posX-0.4+speedX),floor(posY+0.45))) && !contains(new int[]{1}, getMapPos(floor(posX-0.4+speedX),floor(posY)))) posX += speedX;
-  if (speedY > 0 && contains(new int[]{0,5}, getMapPos(floor(posX+0.4),floor(posY+0.45+speedY))) && contains(new int[]{0,5}, getMapPos(floor(posX-0.4),floor(posY+0.45+speedY)))) posY += speedY;
-  else if (speedY < 0 && contains(new int[]{0,5}, getMapPos(floor(posX+0.4),floor(posY+speedY))) && contains(new int[]{0,5}, getMapPos(floor(posX-0.4),floor(posY+speedY)))) posY += speedY;
+  if (speedX > 0 && contains(WALKABLE, getMapPos(posX+0.4+speedX*movSpeed, posY+0.45)) && !contains(new int[]{1}, getMapPos(posX+0.4+speedX*movSpeed, posY))) posX += speedX * movSpeed;
+  else if (speedX < 0 && contains(WALKABLE, getMapPos(posX-0.4+speedX*movSpeed, posY+0.45)) && !contains(new int[]{1}, getMapPos(posX-0.4+speedX*movSpeed, posY))) posX += speedX * movSpeed;
+  if (speedY > 0 && contains(WALKABLE, getMapPos(posX+0.4, posY+0.45+speedY*movSpeed)) && contains(WALKABLE, getMapPos(posX-0.4, posY+0.45+speedY*movSpeed))) posY += speedY * movSpeed;
+  else if (speedY < 0 && contains(WALKABLE, getMapPos(posX+0.4, posY+speedY*movSpeed)) && contains(WALKABLE, getMapPos(posX-0.4, posY+speedY*movSpeed))) posY += speedY * movSpeed;
   if (posX < 0) posX = mapWidth-0.05;
   else if (posX >= mapWidth) posX = 0;
   if (posY < 0) posY = mapHeight-0.05;
@@ -242,13 +247,13 @@ void keyPressed() {
       changeScene(2);
     }
     if (key == 'w' || key == 'W' || keyCode == UP) {
-      speedY = -0.1;
+      speedY = -1;
     } else if (key == 's' || key == 'S' || keyCode == DOWN) {
-      speedY = 0.1;
+      speedY = 1;
     } else if (key == 'a' || key == 'A' || keyCode == LEFT) {
-      speedX = -0.1;
+      speedX = -1;
     } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
-      speedX = 0.1;
+      speedX = 1;
     }
   } else if (level == -3) {
     if (key == ' ') {
@@ -267,40 +272,39 @@ void keyReleased() {
 }
 
 void dig() {
-  if(breakRock != null && !breakRock.isPlaying())breakRock.play();
-  if (speedX > 0) {
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX+1), floor(posY+0.4)))) setMapPos(floor(posX+1), floor(posY+0.4), 0);
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX+1), floor(posY-0.4)))) setMapPos(floor(posX+1), floor(posY-0.4), 0);
-    if (getMapPos(floor(posX+1), floor(posY-0.4)-1) == 1) {
-      if (getMapPos(floor(posX+1), floor(posY-0.4)-2) == 1) setMapPos(floor(posX+1), floor(posY-0.4)-1, 2);
-      else setMapPos(floor(posX+1), floor(posY-0.4)-1, 4);
+  if ((speedX != 0 || speedY != 0) /*&& digCooldown == 0*/) {
+    if (digSound != null && !digSound.isPlaying()) digSound.play();
+
+    if (speedX != 0) {
+      if (!contains(NON_DIGGABLE, getMapPos(posX+speedX, posY+0.4))) setMapPos(posX+speedX, posY+0.4, 0);
+      if (!contains(NON_DIGGABLE, getMapPos(posX+speedX, posY-0.4))) setMapPos(posX+speedX, posY-0.4, 0);
+      //Check new surrounding tiles
+      if (getMapPos(posX+speedX, posY-1.4) == 1) {
+        if (getMapPos(posX+speedX, posY-2.4) == 1) setMapPos(posX+speedX, posY-1.4, 2);
+        else setMapPos(posX+speedX, posY-1.4, 4);
+      }
+      if (getMapPos(posX+speedX, posY+1.4) == 2) setMapPos(posX+speedX, posY+1.4, 4);
     }
-    if (getMapPos(floor(posX+1), floor(posY+0.4)+1) == 2) setMapPos(floor(posX+1), floor(posY+0.4)+1, 4);
-  } else if (speedX < 0) {
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX-1), floor(posY+0.4)))) setMapPos(floor(posX-1), floor(posY+0.4), 0);
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX-1), floor(posY-0.4)))) setMapPos(floor(posX-1), floor(posY-0.4), 0);
-    if (getMapPos(floor(posX-1), floor(posY-0.4)-1) == 1) {
-      if (getMapPos(floor(posX-1), floor(posY-0.4)-2) == 1) setMapPos(floor(posX-1), floor(posY-0.4)-1, 2);
-      else setMapPos(floor(posX-1), floor(posY-0.4)-1, 4);
-    }
-    if (getMapPos(floor(posX-1), floor(posY+0.4)+1) == 2) setMapPos(floor(posX-1), floor(posY+0.4)+1, 4);
-  } else if (speedY > 0) {
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX+0.4), floor(posY+1)))) setMapPos(floor(posX+0.4), floor(posY+1), 0);
-    if (getMapPos(floor(posX+0.4), floor(posY+1)+1) == 1 && (getMapPos(floor(posX+0.4), floor(posY+1)+2) != 1 && getMapPos(floor(posX+0.4), floor(posY+1)+2) != 2)) setMapPos(floor(posX+0.4), floor(posY+1)+1, 4);
-    else if (getMapPos(floor(posX+0.4), floor(posY+1)+1) == 2) setMapPos(floor(posX+0.4), floor(posY+1)+1, 4);
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX-0.4), floor(posY+1)))) setMapPos(floor(posX-0.4), floor(posY+1), 0);
-    if (getMapPos(floor(posX-0.4), floor(posY+1)+1) == 1 && (getMapPos(floor(posX-0.4), floor(posY+1)+2) != 1 && getMapPos(floor(posX-0.4), floor(posY+1)+2) != 2)) setMapPos(floor(posX-0.4), floor(posY+1)+1, 4);
-    else if (getMapPos(floor(posX-0.4), floor(posY+1)+1) == 2) setMapPos(floor(posX-0.4), floor(posY+1)+1, 4);
-  } else if (speedY < 0) {
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX+0.4), floor(posY-1)))) setMapPos(floor(posX+0.4), floor(posY-1), 0);
-    if (!contains(new int[]{0,8}, getMapPos(floor(posX-0.4), floor(posY-1)))) setMapPos(floor(posX-0.4), floor(posY-1), 0);
-    if (getMapPos(floor(posX+0.4), floor(posY-1)-1) == 1) {
-      if (getMapPos(floor(posX+0.4), floor(posY-1)-2) == 1) setMapPos(floor(posX+0.4), floor(posY-1)-1, 2);
-      else setMapPos(floor(posX+0.4), floor(posY-1)-1, 4);
-    }
-    if (getMapPos(floor(posX-0.4), floor(posY-1)-1) == 1) {
-      if (getMapPos(floor(posX-0.4), floor(posY-1)-2) == 1) setMapPos(floor(posX-0.4), floor(posY-1)-1, 2);
-      else setMapPos(floor(posX-0.4), floor(posY-1)-1, 4);
+
+    if (speedY != 0) {
+      if (!contains(NON_DIGGABLE, getMapPos(posX+0.4, posY+speedY))) setMapPos(posX+0.4, posY+speedY, 0);
+      if (!contains(NON_DIGGABLE, getMapPos(posX-0.4, posY+speedY))) setMapPos(posX-0.4, posY+speedY, 0);
+      //Check new surrounding tiles
+      if (speedY > 0) {
+        if (getMapPos(posX+0.4, posY+2) == 1 && getMapPos(posX+0.4, posY+3) != 1 && getMapPos(posX+0.4, posY+3) != 2) setMapPos(posX+0.4, posY+2, 4);
+        else if (getMapPos(posX+0.4, posY+2) == 2) setMapPos(posX+0.4, posY+2, 4);
+        if (getMapPos(posX-0.4, posY+2) == 1 && getMapPos(posX-0.4, posY+3) != 1 && getMapPos(posX-0.4, posY+3) != 2) setMapPos(posX-0.4, posY+2, 4);
+        else if (getMapPos(posX-0.4, posY+2) == 2) setMapPos(posX-0.4, posY+2, 4);
+      } else {
+        if (getMapPos(posX+0.4, posY-2) == 1) {
+          if (getMapPos(posX+0.4, posY-3) == 1) setMapPos(posX+0.4, posY-2, 2);
+          else setMapPos(posX+0.4, posY-2, 4);
+        }
+        if (getMapPos(posX-0.4, posY-2) == 1) {
+          if (getMapPos(posX-0.4, posY-3) == 1) setMapPos(posX-0.4, posY-2, 2);
+          else setMapPos(posX-0.4, posY-2, 4);
+        }
+      }
     }
   }
 }
@@ -329,8 +333,8 @@ void drawMap() {
   int currentTile;
   for (int i = floor(posX)-visTilesX; i < floor(posX)+visTilesX; i++) {
     for (int j = floor(posY)-visTilesY; j < floor(posY)+visTilesY; j++) {
-      tilePosX = i*tileSize-posX*tileSize+width/2;
-      tilePosY = j*tileSize-posY*tileSize+height/2;
+      tilePosX = tileSize*(i-posX) + width/2;
+      tilePosY = tileSize*(j-posY) + height/2;
       iOriginal = i;
       jOriginal = j;
       if (i < 0) i = mapWidth+i;
@@ -460,14 +464,18 @@ void teleport(int num) {
       counter = -1;
     break;
     case 2:
-      level = 2;
-      mapWidth = ceil(mapWidth/4*3);
-      mapHeight = ceil(mapHeight/4*3);
-      maps.set(2, mapGenerator.mapGenerate(2, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
-      for (int i = 0; i < textureTiles.length; i++) {
-        textureTiles[i] = int(random(0, mapWidth*mapHeight));
+      if (maps.get(2).length <= 1) {
+        mapWidth = ceil(mapWidth/1.25);
+        mapHeight = ceil(mapHeight/1.25);
+        maps.set(2, mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, 0));
+        for (int i = 0; i < textureTiles.length; i++) {
+          textureTiles[i] = int(random(0, mapWidth*mapHeight));
+        }
+        npcList = mapGenerator.getNPCs();
       }
-      npcList = mapGenerator.getNPCs();
+      posX = posX/1.25;
+      posY = posY/1.25;
+      level = 2;
     break;
     case 4:
       posX = 15;
