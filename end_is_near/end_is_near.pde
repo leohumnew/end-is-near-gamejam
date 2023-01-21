@@ -81,7 +81,7 @@ void load() {
   for (int i = 0; i < 5; i++) {
     maps.add(new int[1][1]);
   }
-  pixelatedFont = createFont("MotorolaScreentype.ttf", 50);
+  pixelatedFont = createFont("BestTen-DOT.otf", 50);
   textFont(pixelatedFont);
   textJson = loadJSONObject(saveData[1] + "_Text.json");
   introText = textJson.getJSONArray("intro").getStringArray();
