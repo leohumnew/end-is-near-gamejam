@@ -11,6 +11,7 @@ String[] saveData = new String [2];
 
 //Map
 int mapWidth, mapHeight;
+final int[][] MAP_SIZES = {{65, 50}, {55, 45}, {45, 40}};
 ArrayList<int[][]> maps = new ArrayList<int[][]>(5);
 int[][] activeMap;
 MapGenerator mapGenerator = new MapGenerator();
@@ -21,18 +22,16 @@ int fadeStart = 0, transitioningTo = 0;
 final int[] NON_DIGGABLE = {0, 8}, WALKABLE = {0, 5, 10}; 
 
 //Images
-PImage stalagmite, ceilHole, floorHole, floorDiggable, shot, vignette, hitVignette, door, doorOpen, ship, menu, loading;
+PImage ceilHole, floorHole, shot, vignette, hitVignette, ship, menu, loading;
 PImage[] player = new PImage[3];
-PImage[] topWall = new PImage[2];
-PImage[] ground = new PImage[3];
-PImage[] wall = new PImage[3];
-PImage[] topWallSide = new PImage[2];
 PImage[] npcMeelee = new PImage[4];
 PImage[] bg = new PImage[2];
 PImage[] endScreens = new PImage[3];
 PImage[] introScreens = new PImage[4];
 PImage[] items = new PImage[3];
 PImage[] UI = new PImage[2];
+int tileType;
+PImage[][] worldTiles = new PImage[3][16];
 
 PFont pixelatedFont;
 //PShader vignetteShader;
@@ -87,18 +86,9 @@ void load() {
   introText = textJson.getJSONArray("intro").getStringArray();
   endText = (String[])textJson.getJSONArray("endings").getStringArray();
   menu = loadImagePng("C1.png", width, height);
-  ground[0] = loadImagePng("Suelo0_0.png", tileSize);
-  ground[1] = loadImagePng("Suelo0_1.png", tileSize);
-  ground[2] = loadImagePng("Suelo0_2.png", tileSize);
-  wall[0] = loadImagePng("Pared0_0.png", tileSize);
-  wall[1] = loadImagePng("Pared0_1.png", tileSize);
-  wall[2] = loadImagePng("Pared0_2.png", tileSize);
-  topWall[0] = loadImagePng("Pared0_4.png", tileSize);
-  topWall[1] = loadImagePng("Pared0_5.png", tileSize);
-  topWallSide[0] = loadImagePng("Pared0_6.png", tileSize);
-  topWallSide[1] = loadImagePng("Pared0_7.png", tileSize);
-  stalagmite = loadImagePng("Estalagmita0.png", tileSize);
-  floorDiggable = loadImagePng("Suelo0_T.png", tileSize);
+  worldTiles[0] = loadImagePng("Tilemap0.png", tileSize*4, 4, 4);
+  worldTiles[1] = loadImagePng("Tilemap1.png", tileSize*4, 4, 4);
+  worldTiles[2] = loadImagePng("Tilemap2.png", tileSize*4, 4, 4);
   player[0] = loadImagePng("Char1.png", tileSize);
   player[1] = loadImagePng("Char2.png", tileSize);
   player[2] = loadImagePng("Char3.png", tileSize);
@@ -115,7 +105,6 @@ void load() {
   items[2] = loadImagePng("Item1.png", tileSize);
   vignette = loadImagePng("Vig.png", width, height);
   //vignetteShader = loadShader("Vignette.glsl");
-  door = loadImagePng("Pared0_EN.png", tileSize);
   UI[0] = loadImagePng("Frame1.png", tileSize/4, tileSize*4);
   UI[1] = loadImagePng("LifeFrame.png", tileSize, tileSize*2);
   introScreens[0] = loadImagePng("E2.png", width, height);
@@ -130,7 +119,6 @@ void load() {
   level = -2;
   OST = new SoundFile(this, "OST.mp3");
   OST.loop();
-  doorOpen = loadImagePng("Pared0_3.png", tileSize);
   ship = loadImagePng("Nave.png", tileSize*6, tileSize*9);
   endScreens[0] = loadImagePng("D0.png", width, height);
   endScreens[1] = loadImagePng("D1.png", width, height);
@@ -343,31 +331,30 @@ void drawMap() {
       else if (j >= mapHeight) j = j-mapHeight;
 
       currentTile = getMapPos(i, j);
-      if (currentTile==0) {
-        image(ground[floor(posSeed(3, i+j))], tilePosX, tilePosY);
-      } else if (currentTile==1 && (getMapPos(i+1,j) != 1 || getMapPos(i,j+1) != 1 || getMapPos(i-1,j) != 1 || getMapPos(i,j-1) != 1 || getMapPos(i+1,j+1) != 1 || getMapPos(i-1,j-1) != 1 || getMapPos(i+1,j-1) != 1 || getMapPos(i-1,j+1) != 1)) {
-        image(wall[floor(posSeed(3, i+j))], tilePosX, tilePosY);
-      } else if (currentTile==2) {
-        image(topWall[floor(posSeed(2, i+j))], tilePosX, tilePosY);
-      } else if (currentTile==3) {
-        image(stalagmite, tilePosX, tilePosY);
-      } else if (currentTile==4) {
-        image(topWallSide[floor(posSeed(2, i+j))], tilePosX, tilePosY);
-      } else if (currentTile==5 && getMapPos(i, j+2) == 5 && getMapPos(i+2, j) == 5) {
+      if (currentTile==0) { //Floor
+        image(worldTiles[tileType][posSeed(3, i+j)], tilePosX, tilePosY);
+      } else if (currentTile==1){ //Wall
+        if (getMapPos(i+1,j) != 1 || getMapPos(i,j+1) != 1 || getMapPos(i-1,j) != 1 || getMapPos(i,j-1) != 1 || getMapPos(i+1,j+1) != 1 || getMapPos(i-1,j-1) != 1 || getMapPos(i+1,j-1) != 1 || getMapPos(i-1,j+1) != 1) image(worldTiles[tileType][posSeed(3, i+j)+5], tilePosX, tilePosY);
+        else if (contains(textureTiles, i*j) || contains(textureTiles, int(i*j/2))) image(bg[posSeed(2, i*j)], tilePosX, tilePosY);
+      } else if (currentTile==2) { //Top wall
+        image(worldTiles[tileType][posSeed(2, i+j)+3], tilePosX, tilePosY);
+      } else if (currentTile==3) { //Stalagmite
+        image(worldTiles[tileType][12], tilePosX, tilePosY);
+      } else if (currentTile==4) { //Top wall side
+        image(worldTiles[tileType][posSeed(2, i+j)+8], tilePosX, tilePosY);
+      } else if (currentTile==5 && getMapPos(i, j+2) == 5 && getMapPos(i+2, j) == 5) { //Ceiling hole
         image(ceilHole, tilePosX, tilePosY, tileSize*3, tileSize*3);
-      } else if (currentTile==8) {
+      } else if (currentTile==8) { //Door
         if (inventory[0] == 0) {
-          image(doorOpen, tilePosX, tilePosY);
+          image(worldTiles[tileType][10], tilePosX, tilePosY);
         } else {
-          image(door, tilePosX, tilePosY);
+          image(worldTiles[tileType][14], tilePosX, tilePosY);
         }
-      } else if (currentTile == 1 && (contains(textureTiles, i*j) || contains(textureTiles, int(i*j/2)))) {
-        image(bg[floor(posSeed(2, i*j))], tilePosX, tilePosY);
-      } else if (currentTile == 9) {
+      } else if (currentTile == 9) { //Ship
         tilePosX = (i-5)*tileSize-posX*tileSize+width/2;
         tilePosY = (j-8)*tileSize-posY*tileSize+height/2;
         image(ship, tilePosX, tilePosY);
-      } else if (currentTile == 10) image(floorDiggable, tilePosX, tilePosY);
+      } else if (currentTile == 10) image(worldTiles[tileType][11], tilePosX, tilePosY); //Diggable floor
       
       i = iOriginal;
       j = jOriginal;
@@ -449,10 +436,11 @@ void teleport(int num) {
     break;
     case 1:
       level = -1;
+      tileType = 0;
       inventory = new int[]{1,2,-1};
       health = 100;
-      mapWidth = 65;
-      mapHeight = 50;
+      mapWidth = MAP_SIZES[0][0];
+      mapHeight = MAP_SIZES[0][1];
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;
       maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
@@ -464,9 +452,10 @@ void teleport(int num) {
       counter = -1;
     break;
     case 2:
+      tileType = 1;
+      mapWidth = MAP_SIZES[1][0];
+      mapHeight = MAP_SIZES[1][1];
       if (maps.get(2).length <= 1) {
-        mapWidth = ceil(mapWidth/1.25);
-        mapHeight = ceil(mapHeight/1.25);
         maps.set(2, mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, 0));
         for (int i = 0; i < textureTiles.length; i++) {
           textureTiles[i] = int(random(0, mapWidth*mapHeight));
@@ -540,15 +529,15 @@ void banner(String text) {
   text(text, width/6, height/1.22, width/6*4, height/10);
 }
 
-PImage[] loadImagePngCpyPx(Image image, String inFile, int w, int h, int xNum, int yNum) {
+PImage[] loadImagePngCpyPx(Image image, int w, int h, int xNum, int yNum) {
   PImage[] retval = new PImage[xNum*yNum];
   for (int i = 0; i < xNum*yNum; i++) {
-    retval[i] = createImage(w,h,ARGB);
+    retval[i] = createImage(w/xNum,h/yNum,ARGB);
   }
   try {
-    for (int i = 0; i < xNum; i++) {
-      for (int j = 0; j < yNum; j++) {
-        PixelGrabber grabber = new PixelGrabber(image, w/xNum*i, h/yNum*j, (w/xNum*(i+1)), (h/yNum*(j+1)), retval[i].pixels, 0, w);
+    for (int i = 0; i < yNum; i++) {
+      for (int j = 0; j < xNum; j++) {
+        PixelGrabber grabber = new PixelGrabber(image, w/xNum*j, h/yNum*i, w/xNum, h/yNum, retval[i*xNum+j].pixels, 0, w/xNum);
         grabber.grabPixels();
       }
     }
@@ -559,6 +548,6 @@ PImage[] loadImagePngCpyPx(Image image, String inFile, int w, int h, int xNum, i
   }
   return retval;
 }
-PImage[] loadImagePng(String inFile, int size, int xNum, int yNum) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), inFile, size, size, xNum, yNum); }
-PImage loadImagePng(String inFile, int w, int h) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(w, h, Image.SCALE_DEFAULT), inFile, w, h, 1, 1)[0]; }
-PImage loadImagePng(String inFile, int size) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), inFile, size, size, 1, 1)[0]; }
+PImage[] loadImagePng(String inFile, int size, int xNum, int yNum) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), size, size, xNum, yNum); }
+PImage loadImagePng(String inFile, int w, int h) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(w, h, Image.SCALE_DEFAULT), w, h, 1, 1)[0]; }
+PImage loadImagePng(String inFile, int size) { return loadImagePngCpyPx(Toolkit.getDefaultToolkit().getImage(dataPath(inFile)).getScaledInstance(size, size, Image.SCALE_DEFAULT), size, size, 1, 1)[0]; }
