@@ -11,7 +11,7 @@ String[] saveData = new String [2];
 
 //Map
 int mapWidth, mapHeight;
-final int[][] MAP_SIZES = {{65, 50}, {55, 45}, {45, 40}};
+final int[][] MAP_SIZES = {{65, 50}, {55, 46}, {45, 40}};
 ArrayList<int[][]> maps = new ArrayList<int[][]>(5);
 int[][] activeMap;
 MapGenerator mapGenerator = new MapGenerator();
@@ -19,7 +19,7 @@ int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
 int visTilesX, visTilesY;
 int fadeStart = 0, transitioningTo = 0;
-final int[] NON_DIGGABLE = {0, 8}, WALKABLE = {0, 5, 10}; 
+final int[] NON_DIGGABLE = {0, 8, 10, 11}, WALKABLE = {0, 5, 10}; 
 
 //Images
 PImage ceilHole, floorHole, shot, vignette, hitVignette, ship, menu, loading;
@@ -77,9 +77,6 @@ void setup() {
 }
 
 void load() {
-  for (int i = 0; i < 5; i++) {
-    maps.add(new int[1][1]);
-  }
   pixelatedFont = createFont("BestTen-DOT.otf", 50);
   textFont(pixelatedFont);
   textJson = loadJSONObject(saveData[1] + "_Text.json");
@@ -231,9 +228,6 @@ void keyPressed() {
       countDownActive = true;
       time = millis();
     }
-    if (level == 1 && key == ' '){
-      changeScene(2);
-    }
     if (key == 'w' || key == 'W' || keyCode == UP) {
       speedY = -1;
     } else if (key == 's' || key == 'S' || keyCode == DOWN) {
@@ -294,6 +288,10 @@ void dig() {
         }
       }
     }
+  } else if (getMapPos(posX, posY) == 10 && level > 0 && level < 3) {
+    if (digSound != null && !digSound.isPlaying()) digSound.play();
+    //setMapPos(posX, posY, 11);
+    changeScene(level+1);
   }
 }
 
@@ -386,11 +384,8 @@ void drawUI() {
   else rect(int(width-width/20+2), int(height/5*4-2), int(width/30-4), 0-int(height/5*3-4));
   image(UI[0], width-width/20, height/5, width/30, height/5*3);
   fill(255,0,0);
-  rect(width/20, height/25, map(health,0,100,0,4*tileSize), 1.5*tileSize);
-  image(UI[1], width/20, height/25, 4*tileSize, 1.5*tileSize);
-  fill(255);
-  stroke(0);
-
+  rect(width/25, height/27, 1.5*tileSize, map(health,0,100,0,4*tileSize));
+  image(UI[1], width/25, height/27, 1.5*tileSize, 4*tileSize);
   //Inventory
   for (int i = 0; i < inventory.length; i++) {
     if (inventory[i] != -1) {
@@ -404,7 +399,8 @@ void drawUI() {
       }
     }
   }
-
+  //Level transition
+  if (getMapPos(posX, posY) == 10) banner("The ground is soft here... Maybe you could dig down a bit?");
   //Tutorial
   if (level == 1 && !countDownActive) {
     drawKey("W", "UP", width/2-tileSize/2, height/2-tileSize*2, false);
@@ -439,11 +435,15 @@ void teleport(int num) {
       tileType = 0;
       inventory = new int[]{1,2,-1};
       health = 100;
+      maps.clear();
+      for (int i = 0; i < 5; i++) {
+        maps.add(new int[1][1]);
+      }
       mapWidth = MAP_SIZES[0][0];
       mapHeight = MAP_SIZES[0][1];
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;
-      maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, 0));
+      maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num));
       for (int i = 0; i < textureTiles.length; i++) {
         textureTiles[i] = int(random(0, mapWidth*mapHeight));
       }
@@ -452,11 +452,12 @@ void teleport(int num) {
       counter = -1;
     break;
     case 2:
-      tileType = 1;
-      mapWidth = MAP_SIZES[1][0];
-      mapHeight = MAP_SIZES[1][1];
-      if (maps.get(2).length <= 1) {
-        maps.set(2, mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, 0));
+    case 3:
+      tileType = num-1;
+      mapWidth = MAP_SIZES[num-1][0];
+      mapHeight = MAP_SIZES[num-1][1];
+      if (maps.get(num).length <= 1) {
+        maps.set(num, mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, num));
         for (int i = 0; i < textureTiles.length; i++) {
           textureTiles[i] = int(random(0, mapWidth*mapHeight));
         }
@@ -464,12 +465,12 @@ void teleport(int num) {
       }
       posX = posX/1.25;
       posY = posY/1.25;
-      level = 2;
+      level = num;
     break;
     case 4:
       posX = 15;
       posY = 10;
-      maps.set(4, mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, 1));
+      maps.set(4, mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, num));
       countDownActive = false;
       delayInt = millis();
       level = 4;
