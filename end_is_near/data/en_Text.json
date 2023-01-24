@@ -24,6 +24,11 @@
         "DOWN",
         "LEFT",
         "Shoot",
-        "Dig"
+        "Dig",
+        "SPACE to skip",
+        "SPACE to replay",
+        "Climb UP a level",
+        "Climb DOWN a level",
+        "The ground is soft here... Maybe you could dig down a bit?"
     ]
 }

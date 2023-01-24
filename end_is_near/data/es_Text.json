@@ -19,6 +19,11 @@
         "ABAJO",
         "IZQUIERDA",
         "Disparar",
-        "Cavar"   
+        "Cavar",
+        "ESPACIO para saltar",
+        "ESPACIO para volver a reproducir",
+        "SUBIR un nivel",
+        "BAJAR un nivel",
+        "La tierra está más blanda aquí... ¿A lo mejor se puede cavar?"
     ]
 }
