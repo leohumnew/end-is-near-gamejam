@@ -1,8 +1,8 @@
 public class NPC {
   boolean meelee, playerInRadius = false;
   int death = 0, randomSeed = int(random(14));
-  float xPos, yPos;
-  float npcSpeedX = 0.03, npcSpeedY = 0.03;
+  float xPos, yPos, npcSpeedX, npcSpeedY;
+  final float SPEED_X = random(1.2, 2), SPEED_Y = random(1.2, 2);
   float x, y;
 
   public NPC (boolean meelee, int xPos, int yPos) {
@@ -13,6 +13,8 @@ public class NPC {
 
   void updatePos() {
     if (playerInRadius && dist(xPos, yPos, posX, posY) > 0.05*randomSeed) {
+      npcSpeedX = SPEED_X/frameRate;
+      npcSpeedY = SPEED_Y/frameRate;
       if (isPlayerRight()) {
         if (contains(WALKABLE, getMapPos(xPos+0.4+npcSpeedX, yPos+0.45)) && !contains(new int[]{1,2}, getMapPos(xPos+0.4+npcSpeedX, yPos-0.3))) xPos += npcSpeedX;
       } else {

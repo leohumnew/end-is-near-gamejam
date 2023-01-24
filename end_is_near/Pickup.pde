@@ -15,13 +15,14 @@ public class Pickup {
   void checkPickup() {
     if (dist(x, y, posX, posY) < 1) {
       if (item >= 0) {
+        if (item == 0) inventory[2] = 0;
+        else if (item == 3) health += 34;
         itemGet.play();
-        inventory[2] = 0;
         itemList.remove(this);
       } else if (item == -1) {
         if (inventory[2] == 0) changeScene(4);
         else {
-          banner("Locked...");
+          banner(textUI[1]);
         }
       }
     }

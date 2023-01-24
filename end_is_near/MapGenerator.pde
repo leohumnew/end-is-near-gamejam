@@ -240,6 +240,9 @@ public class MapGenerator {
               map[j][k] = 0;
               npcs.add(new NPC(true, j, k));
             } else map[j][k] = roomTemplates[room][j-x][k-y];
+            if (map[j][k] == 0 && random(1) < 0.02) {
+              itemList.add(new Pickup(j, k, 3));
+            }
           }
         }
       }

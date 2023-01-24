@@ -22,14 +22,15 @@ int fadeStart = 0, transitioningTo = 0;
 final int[] NON_DIGGABLE = {0, 8, 10, 11}, WALKABLE = {0, 5, 10}; 
 
 //Images
-PImage ceilHole, floorHole, shot, vignette, hitVignette, ship, menu, loading;
+PImage floorHole, shot, vignette, hitVignette, ship, menu, loading;
 PImage[] player = new PImage[3];
 PImage[] npcMeelee = new PImage[4];
 PImage[] bg = new PImage[2];
 PImage[] endScreens = new PImage[3];
 PImage[] introScreens = new PImage[4];
-PImage[] items = new PImage[3];
+PImage[] items = new PImage[4];
 PImage[] UI = new PImage[2];
+PImage[] ceilHole = new PImage[2];
 int tileType;
 PImage[][] worldTiles = new PImage[3][16];
 
@@ -37,16 +38,16 @@ PFont pixelatedFont;
 //PShader vignetteShader;
 
 //Player variables
-final int TIME_LIMIT = 60000;
-float posX, posY, speedX = 0, speedY = 0, movSpeed = 0.1;
+final int TIME_LIMIT = 60000, MOV_SPEED = 4;
+float posX, posY, speedX = 0, speedY = 0, movSpeed;
 int time, health, delayInt, vignetteCounter;
 boolean countDownActive = false;
 int ending = 3, counter = -1, level = -1;
 int[] inventory;
+boolean[] pressedKeys = {false,false,false,false};
 
 JSONObject textJson;
-String[] introText;
-String[] endText;
+String[] introText, endText, textUI;
 
 //Objects
 ArrayList<NPC> npcList;
@@ -82,6 +83,7 @@ void load() {
   textJson = loadJSONObject(saveData[1] + "_Text.json");
   introText = textJson.getJSONArray("intro").getStringArray();
   endText = (String[])textJson.getJSONArray("endings").getStringArray();
+  textUI = textJson.getJSONArray("UI").getStringArray();
   menu = loadImagePng("C1.png", width, height);
   worldTiles[0] = loadImagePng("Tilemap0.png", tileSize*4, 4, 4);
   worldTiles[1] = loadImagePng("Tilemap1.png", tileSize*4, 4, 4);
@@ -89,7 +91,8 @@ void load() {
   player[0] = loadImagePng("Char1.png", tileSize);
   player[1] = loadImagePng("Char2.png", tileSize);
   player[2] = loadImagePng("Char3.png", tileSize);
-  ceilHole = loadImagePng("Entr.png", tileSize);
+  ceilHole[0] = loadImagePng("Land0_1.png", tileSize);
+  ceilHole[1] = loadImagePng("Land0_2.png", tileSize);
   npcMeelee[0] = loadImagePng("Char7.png", tileSize);
   npcMeelee[1] = loadImagePng("Char8.png", tileSize);
   npcMeelee[2] = loadImagePng("Char9.png", tileSize);
@@ -100,6 +103,7 @@ void load() {
   items[0] = loadImagePng("Key.png", tileSize);
   items[1] = loadImagePng("Item4.png", tileSize);
   items[2] = loadImagePng("Item1.png", tileSize);
+  items[3] = loadImagePng("Item6.png", tileSize);
   vignette = loadImagePng("Vig.png", width, height);
   //vignetteShader = loadShader("Vignette.glsl");
   UI[0] = loadImagePng("Frame1.png", tileSize/4, tileSize*4);
@@ -166,13 +170,13 @@ void draw() {
       fill(255);
       text(introText[counter], width/16, height/5*3.8, width/16*14, height/5);
       textSize(30);
-      text("SPACE to skip", 0, height/5*4.7, width, height/20);
+      text(textUI[8], 0, height/5*4.7, width, height/20);
     } else {
       image(endScreens[ending], 0, 0);
       fill(255);
       text(endText[ending], width/16, height/5*3.7, width/16*14, height/5);
       textSize(30);
-      text("SPACE to play again", 0, height/5*4.7, width, height/20);
+      text(textUI[9], 0, height/5*4.7, width, height/20);
     }
   } else if (level == -4 && transitioningTo == 0) changeScene(-3);
   if (fadeStart > 0) {
@@ -213,6 +217,7 @@ void setMapPos(float x, float y, int value) {
 //PLAYER FUNCTIONS ------------------
 void move() {
   //collision
+  movSpeed = MOV_SPEED/frameRate;
   if (speedX > 0 && contains(WALKABLE, getMapPos(posX+0.4+speedX*movSpeed, posY+0.45)) && !contains(new int[]{1}, getMapPos(posX+0.4+speedX*movSpeed, posY))) posX += speedX * movSpeed;
   else if (speedX < 0 && contains(WALKABLE, getMapPos(posX-0.4+speedX*movSpeed, posY+0.45)) && !contains(new int[]{1}, getMapPos(posX-0.4+speedX*movSpeed, posY))) posX += speedX * movSpeed;
   if (speedY > 0 && contains(WALKABLE, getMapPos(posX+0.4, posY+0.45+speedY*movSpeed)) && contains(WALKABLE, getMapPos(posX-0.4, posY+0.45+speedY*movSpeed))) posY += speedY * movSpeed;
@@ -229,12 +234,16 @@ void keyPressed() {
       time = millis();
     }
     if (key == 'w' || key == 'W' || keyCode == UP) {
+      pressedKeys[0] = true;
       speedY = -1;
     } else if (key == 's' || key == 'S' || keyCode == DOWN) {
+      pressedKeys[1] = true;
       speedY = 1;
     } else if (key == 'a' || key == 'A' || keyCode == LEFT) {
+      pressedKeys[2] = true;
       speedX = -1;
     } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
+      pressedKeys[3] = true;
       speedX = 1;
     }
   } else if (level == -3) {
@@ -246,10 +255,22 @@ void keyPressed() {
   }
 }
 void keyReleased() {
-  if (key == 'w' || key == 'W' || keyCode == UP || key == 's' || key == 'S' || keyCode == DOWN) {
-    speedY = 0;
-  } else if (key == 'a' || key == 'A' || keyCode == LEFT || key == 'd' || key == 'D' || keyCode == RIGHT) {
-    speedX = 0;
+  if (key == 'w' || key == 'W' || keyCode == UP) {
+    pressedKeys[0] = false;
+    if (pressedKeys[1]) speedY = 1;
+    else speedY = 0;
+  } else if (key == 's' || key == 'S' || keyCode == DOWN) {
+    pressedKeys[1] = false;
+    if (pressedKeys[0]) speedY = -1;
+    else speedY = 0;
+  } else if (key == 'a' || key == 'A' || keyCode == LEFT) {
+    pressedKeys[2] = false;
+    if (pressedKeys[3]) speedX = 1;
+    else speedX = 0;
+  } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
+    pressedKeys[3] = false;
+    if (pressedKeys[2]) speedX = -1;
+    else speedX = 0;
   }
 }
 
@@ -341,7 +362,7 @@ void drawMap() {
       } else if (currentTile==4) { //Top wall side
         image(worldTiles[tileType][posSeed(2, i+j)+8], tilePosX, tilePosY);
       } else if (currentTile==5 && getMapPos(i, j+2) == 5 && getMapPos(i+2, j) == 5) { //Ceiling hole
-        image(ceilHole, tilePosX, tilePosY, tileSize*3, tileSize*3);
+        image((level == 3) ? ceilHole[1] : ceilHole[0], tilePosX, tilePosY, tileSize*3, tileSize*3);
       } else if (currentTile==8) { //Door
         if (inventory[0] == 0) {
           image(worldTiles[tileType][10], tilePosX, tilePosY);
@@ -400,16 +421,16 @@ void drawUI() {
     }
   }
   //Level transition
-  if (getMapPos(posX, posY) == 10) banner("The ground is soft here... Maybe you could dig down a bit?");
+  if (getMapPos(posX, posY) == 10) banner(textUI[12]);
   //Tutorial
   if (level == 1 && !countDownActive) {
-    drawKey("W", "UP", width/2-tileSize/2, height/2-tileSize*2, false);
-    drawKey("A", "LEFT", width/2-tileSize*2, height/2-tileSize/2, false);
-    drawKey("S", "DOWN", width/2-tileSize/2, height/2+tileSize, false);
-    drawKey("D", "RIGHT", width/2+tileSize, height/2-tileSize/2, false);
-    drawKey("Right Mouse", "DIG", width/2+tileSize*2, height/2-3*tileSize, true);
-    drawKey("Left Mouse", "SHOOT", width/2-tileSize*4, height/2-3*tileSize, true);
-    banner("Save the Earth. Avoid the alien Tenshi.");
+    drawKey("W", textUI[2], width/2-tileSize/2, height/2-tileSize*2, false);
+    drawKey("D", textUI[3], width/2+tileSize, height/2-tileSize/2, false);
+    drawKey("S", textUI[4], width/2-tileSize/2, height/2+tileSize, false);
+    drawKey("A", textUI[5], width/2-tileSize*2, height/2-tileSize/2, false);
+    drawKey("Left Mouse", textUI[6], width/2-tileSize*4, height/2-3*tileSize, true);
+    drawKey("Right Mouse", textUI[7], width/2+tileSize*2, height/2-3*tileSize, true);
+    banner(textUI[0]);
   }
 }
 
