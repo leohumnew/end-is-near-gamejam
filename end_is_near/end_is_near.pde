@@ -55,26 +55,27 @@ ArrayList<Bullet> bulletList = new ArrayList<Bullet>();
 void settings() {
   loadSave();
   if (int(saveData[0])==1){
-    fullScreen();
-    //size(displayWidth, displayHeight, P2D);
-  }
-  else size(1280, 720);
-  noSmooth();
+    fullScreen(P2D);
+  } else size(displayWidth, displayHeight, P2D);
 }
 
-void setup() {
-  //((PGraphicsOpenGL)g).textureSampling(2);
+void setup() {  
+  surface.setTitle("SPeace");
+  ((PGraphicsOpenGL)g).textureSampling(2);
   frameRate(60);
   textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-
   //load images
   loading = loadImagePng("Loading.png", tileSize*8, tileSize*4);
   thread("load");
 }
 
 void load() {
+  if(((double)Toolkit.getDefaultToolkit().getScreenResolution())/96.0 != 1) {
+    double scalingFactor = ((double)Toolkit.getDefaultToolkit().getScreenResolution())/96.0;
+    surface.setSize((int)(displayWidth*scalingFactor), (int)(displayHeight*scalingFactor));
+  }
   pixelatedFont = createFont("BestTen-DOT.otf", 50);
   textFont(pixelatedFont);
   textJson = loadJSONObject(saveData[1] + "_Text.json");
@@ -152,7 +153,7 @@ void draw() {
     textSize(50);
     //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
     if (ending == 3) {
-      if (millis()-delayInt > 2500 && transitioningTo == 0) {
+      if (millis()-delayInt > 3000 && transitioningTo == 0) {
         if (counter >= 3) {
           changeScene(1);
         } else {
@@ -184,7 +185,7 @@ void draw() {
     stroke(255);
   }
   fill(255);
-  text(frameRate, 100,100);
+  text(frameRate, 150,100);
 }
 
 //MAP FUNCTIONS ------------------
