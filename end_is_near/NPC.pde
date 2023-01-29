@@ -11,7 +11,7 @@ public class NPC {
     this.yPos = yPos;
   }
 
-  void updatePos() {
+  private void updatePos() {
     if (playerInRadius && dist(xPos, yPos, posX, posY) > 0.05*randomSeed) {
       npcSpeedX = SPEED_X/frameRate;
       npcSpeedY = SPEED_Y/frameRate;
@@ -42,16 +42,16 @@ public class NPC {
     }
   }
 
-  boolean isPlayerRight() {
+  private boolean isPlayerRight() {
     if (((xPos < posX) ? mapWidth+xPos : xPos) - posX > posX - ((xPos > posX) ? xPos-mapWidth : xPos)) return true;
     return false;
   }
-  boolean isPlayerBelow() {
+  private boolean isPlayerBelow() {
     if (((yPos < posY) ? mapHeight+yPos : yPos) - posY > posY - ((yPos > posY) ? yPos-mapHeight : yPos)) return true;
     return false;
   }
 
-  public void drawNPC() {
+  public void update() {
     if (abs(xPos+mapWidth-posX) < abs(xPos-posX)) x = tileSize*(xPos+mapWidth-posX) + width/2 - tileSize/2;
     else if (abs(xPos-mapWidth-posX) < abs(xPos-posX)) x = tileSize*(xPos-mapWidth-posX) + width/2 - tileSize/2;
     else x = tileSize*(xPos-posX) + width/2 - tileSize/2;
@@ -72,11 +72,11 @@ public class NPC {
     } else {
       if (millis()-death < 150) image(npcMeelee[2], x, y);
       else if (millis()-death < 400) image(npcMeelee[3], x, y);
-      else npcList.remove(this);
+      else maps[level].npcList.remove(this);
     }
   }
 
-  void checkPlayerInRadius() {
+  private void checkPlayerInRadius() {
     playerInRadius = (dist(xPos, yPos, xPos, yPos) < 8) ? true : false;
   }
 }

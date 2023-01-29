@@ -18,7 +18,7 @@ public class Pickup {
         if (item == 0) inventory[2] = 0;
         else if (item == 3) health += 34;
         itemGet.play();
-        itemList.remove(this);
+        maps[level].itemList.remove(this);
       } else if (item == -1) {
         if (inventory[2] == 0) changeScene(4);
         else {

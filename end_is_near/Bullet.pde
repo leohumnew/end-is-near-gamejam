@@ -23,9 +23,9 @@ public class Bullet {
     if (getMapPos(x, y) == 1 || getMapPos(x, y) == 2) {
       bulletList.remove(this);
     }
-    for (int i = 0; i < npcList.size(); i++) {
-      if (friendly && dist(x, y, npcList.get(i).xPos, npcList.get(i).yPos) < 0.6 && npcList.get(i).death == 0) {
-        npcList.get(i).death = millis();
+    for (int i = 0; i < maps[level].npcList.size(); i++) {
+      if (friendly && dist(x, y, maps[level].npcList.get(i).xPos, maps[level].npcList.get(i).yPos) < 0.6 && maps[level].npcList.get(i).death == 0) {
+        maps[level].npcList.get(i).death = millis();
         bulletList.remove(this);
         break;
       }

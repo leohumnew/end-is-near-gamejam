@@ -2,6 +2,7 @@ public class MapGenerator {
   //Already generated rooms + function to check if room overlaps with any old rooms
   ArrayList<int[]> rooms = new ArrayList<int[]>();
   ArrayList<NPC> npcs = new ArrayList<NPC>();
+  ArrayList<Pickup> pickups = new ArrayList<Pickup>();
   int[][] map;
 
   // create array of 2d arrays of ints to store room templates
@@ -172,10 +173,10 @@ public class MapGenerator {
     return false;
   };
 
-  int[][] mapGenerate(int roomNum, int mapWidth, int mapHeight, int startX, int startY, int mapType) { //Map type 0 = normal, 1 = spaceship
+  int[][] mapGenerate(int roomNum, int mapWidth, int mapHeight, int startX, int startY, int newMapNum) {
     rooms.clear();
     npcs.clear();
-    itemList.clear();
+    pickups.clear();
     map = new int[mapWidth][mapHeight];
 
     //Fill map with 1's
@@ -186,77 +187,66 @@ public class MapGenerator {
     }
 
     //Generate special rooms
-    if (mapType != 4) {
-      for (int i = 0; i < specialRoomTemplates.length-1; i++) {
-        if (contains(specialRoomTemplates[i][specialRoomTemplates[i].length-1], mapType)) {
-          int room = i;
-          int x, y;
+    for (int i = 0; i < specialRoomTemplates.length; i++) {
+      if (contains(specialRoomTemplates[i][specialRoomTemplates[i].length-1], newMapNum)) {
+        int room = i;
+        int x, y;
 
-          if (room == 0) {
-            x = startX;
-            y = startY;
-          } else {
-            do {
-              x = int(random(1, mapWidth-specialRoomTemplates[room].length-1));
-              y = int(random(1, mapHeight-specialRoomTemplates[room][0].length));
-            } while (overlapsOldRoom(x, y, specialRoomTemplates[room].length-1, specialRoomTemplates[room][0].length));
-          }
-
-          rooms.add(new int[] {x, y, x+specialRoomTemplates[room].length-1, y+specialRoomTemplates[room][0].length});
-
-          for (int j = x; j < x+specialRoomTemplates[room].length-1; j++) {
-            for (int k = y; k < y+specialRoomTemplates[room][0].length; k++) {
-              if(k < 0)println(k+" "+y+" "+room);
-              if(specialRoomTemplates[room][j-x][k-y] == 6) {
-                map[j][k] = 0;
-                npcs.add(new NPC(true, j, k));
-              } else if (specialRoomTemplates[room][j-x][k-y] == 7) {
-                map[j][k] = 0;
-                itemList.add(new Pickup(j, k, 0));
-              } else map[j][k] = specialRoomTemplates[room][j-x][k-y];
-              if (map[j][k] == 8) {
-                itemList.add(new Pickup(j, k+1, -1));
-              }
-            }
-          }
+        if (room == 0 || room == 4) {
+          x = startX;
+          y = startY;
+        } else {
+          do {
+            x = int(random(0, mapWidth-specialRoomTemplates[room].length-1));
+            y = int(random(0, mapHeight-specialRoomTemplates[room][0].length-1));
+          } while (overlapsOldRoom(x, y, specialRoomTemplates[room].length-1, specialRoomTemplates[room][0].length));
         }
-      }
 
-      //Generate rooms
-      for (int i = 0; i < roomNum; i++) {
-        int room, x, y;
+        rooms.add(new int[] {x, y, x+specialRoomTemplates[room].length-1, y+specialRoomTemplates[room][0].length});
 
-        do {
-          room = int(random(0, roomTemplates.length));
-          x = int(random(1, mapWidth-roomTemplates[room].length));
-          y = int(random(1, mapHeight-roomTemplates[room][0].length));
-        } while (overlapsOldRoom(x, y, roomTemplates[room].length, roomTemplates[room][0].length));
-
-        rooms.add(new int[] {x, y, x+roomTemplates[room].length, y+roomTemplates[room][0].length});
-
-        for (int j = x; j < x+roomTemplates[room].length; j++) {
-          for (int k = y; k < y+roomTemplates[room][0].length; k++) {
-            if(roomTemplates[room][j-x][k-y] == 6) {
+        for (int j = x; j < x+specialRoomTemplates[room].length-1; j++) {
+          for (int k = y; k < y+specialRoomTemplates[room][0].length; k++) {
+            if(k < 0)println(k+" "+y+" "+room);
+            if(specialRoomTemplates[room][j-x][k-y] == 6) {
               map[j][k] = 0;
               npcs.add(new NPC(true, j, k));
-            } else map[j][k] = roomTemplates[room][j-x][k-y];
-            if (map[j][k] == 0 && random(1) < 0.02) {
-              itemList.add(new Pickup(j, k, 3));
+            } else if (specialRoomTemplates[room][j-x][k-y] == 7) {
+              map[j][k] = 0;
+              pickups.add(new Pickup(j, k, 0));
+            } else map[j][k] = specialRoomTemplates[room][j-x][k-y];
+            if (map[j][k] == 8) {
+              pickups.add(new Pickup(j, k+1, -1));
             }
           }
-        }
-      }
-    } else if (mapType == 1) {
-      for (int j = 11; j < 11+specialRoomTemplates[specialRoomTemplates.length-1].length; j++) {
-        for (int k = 3; k < 3+specialRoomTemplates[specialRoomTemplates.length-1][0].length; k++) {
-          map[j][k] = specialRoomTemplates[specialRoomTemplates.length-1][j-11][k-3];
         }
       }
     }
-    return map;
-  }
 
-  public ArrayList<NPC> getNPCs() {
-    return npcs;
+    //Generate rooms
+    for (int i = 0; i < roomNum; i++) {
+      int room, x, y;
+
+      do {
+        room = int(random(0, roomTemplates.length));
+        x = int(random(0, mapWidth-roomTemplates[room].length-1));
+        y = int(random(0, mapHeight-roomTemplates[room][0].length-1));
+      } while (overlapsOldRoom(x, y, roomTemplates[room].length, roomTemplates[room][0].length));
+
+      rooms.add(new int[] {x, y, x+roomTemplates[room].length, y+roomTemplates[room][0].length});
+
+      for (int j = x; j < x+roomTemplates[room].length; j++) {
+        for (int k = y; k < y+roomTemplates[room][0].length; k++) {
+          if(roomTemplates[room][j-x][k-y] == 6) {
+            map[j][k] = 0;
+            npcs.add(new NPC(true, j, k));
+          } else map[j][k] = roomTemplates[room][j-x][k-y];
+          if (map[j][k] == 0 && random(1) < 0.01) {
+            pickups.add(new Pickup(j, k, 3));
+          }
+        }
+      }
+    }
+
+    return map;
   }
 }

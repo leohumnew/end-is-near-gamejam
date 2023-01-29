@@ -11,9 +11,8 @@ String[] saveData = new String [2];
 
 //Map
 int mapWidth, mapHeight;
-final int[][] MAP_SIZES = {{65, 50}, {55, 46}, {45, 40}};
-ArrayList<int[][]> maps = new ArrayList<int[][]>(5);
-int[][] activeMap;
+final int[][] MAP_SIZES = {{65, 50}, {55, 46}, {45, 40}, {30, 26}};
+Map[] maps;
 MapGenerator mapGenerator = new MapGenerator();
 int[] textureTiles = new int[mapWidth];
 int tileSize = 64;
@@ -50,34 +49,33 @@ JSONObject textJson;
 String[] introText, endText, textUI;
 
 //Objects
-ArrayList<NPC> npcList;
 ArrayList<Bullet> bulletList = new ArrayList<Bullet>();
-ArrayList<Pickup> itemList = new ArrayList<Pickup>();
 
 //SETTINGS FUNCTION -----------------
 void settings() {
   loadSave();
   if (int(saveData[0])==1){
-    fullScreen();
-    //size(displayWidth, displayHeight, P2D);
-  }
-  else size(1280, 720);
-  noSmooth();
+    fullScreen(P2D);
+  } else size(displayWidth, displayHeight, P2D);
 }
 
-void setup() {
-  //((PGraphicsOpenGL)g).textureSampling(2);
+void setup() {  
+  surface.setTitle("SPeace");
+  ((PGraphicsOpenGL)g).textureSampling(2);
   frameRate(60);
   textAlign(CENTER, CENTER);
   visTilesX = ceil(width/tileSize);
   visTilesY = ceil(height/tileSize);
-
   //load images
   loading = loadImagePng("Loading.png", tileSize*8, tileSize*4);
   thread("load");
 }
 
 void load() {
+  if(((double)Toolkit.getDefaultToolkit().getScreenResolution())/96.0 != 1) {
+    double scalingFactor = ((double)Toolkit.getDefaultToolkit().getScreenResolution())/96.0;
+    surface.setSize((int)(displayWidth*scalingFactor), (int)(displayHeight*scalingFactor));
+  }
   pixelatedFont = createFont("BestTen-DOT.otf", 50);
   textFont(pixelatedFont);
   textJson = loadJSONObject(saveData[1] + "_Text.json");
@@ -141,12 +139,8 @@ void draw() {
     for (int i = 0; i < bulletList.size(); i++) {
       bulletList.get(i).update();
     }
-    for (int i = 0; i < npcList.size(); i++) {
-      npcList.get(i).drawNPC();
-    }
-    for (int i = 0; i < itemList.size(); i++) {
-      itemList.get(i).update();
-    }
+    maps[level].updateNpcs();
+    maps[level].updateItems();
     drawPlayer();
     image(vignette, 0, 0);
     //shader(vignetteShader);
@@ -159,7 +153,7 @@ void draw() {
     textSize(50);
     //Endings: 0 (death suffocation), 1 (death killed), 2 (escape but not saved earth), 3 (intro)
     if (ending == 3) {
-      if (millis()-delayInt > 2500 && transitioningTo == 0) {
+      if (millis()-delayInt > 3000 && transitioningTo == 0) {
         if (counter >= 3) {
           changeScene(1);
         } else {
@@ -191,7 +185,7 @@ void draw() {
     stroke(255);
   }
   fill(255);
-  text(frameRate, 100,100);
+  text(frameRate, 150,100);
 }
 
 //MAP FUNCTIONS ------------------
@@ -202,7 +196,7 @@ int getMapPos(float x, float y) {
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  return activeMap[int(x)][int(y)];
+  return maps[level].map[int(x)][int(y)];
 }
 void setMapPos(float x, float y, int value) {
   x = floor(x);
@@ -211,7 +205,7 @@ void setMapPos(float x, float y, int value) {
   else if (x >= mapWidth) x = x-mapWidth;
   if (y < 0) y = mapHeight+y;
   else if (y >= mapHeight) y = y-mapHeight;
-  if(activeMap[int(x)][int(y)] != 5) activeMap[int(x)][int(y)] = value;
+  if(maps[level].map[int(x)][int(y)] != 5) maps[level].map[int(x)][int(y)] = value;
 }
 
 //PLAYER FUNCTIONS ------------------
@@ -443,10 +437,11 @@ void changeScene(int n) {
 }
 //-3 = cinematic, -2 = menu, -1 = loading, 1 = main floor, 2 = second floor, 3 = third floor, 4 = spaceship
 void teleport(int num) {
-  if (level > 0) maps.set(level, activeMap);
   transitioningTo = 0;
+  bulletList.clear();
   switch (num) {
     case -3:
+      countDownActive = false;
       delayInt = millis();
       level = -3;
       counter++;
@@ -456,19 +451,15 @@ void teleport(int num) {
       tileType = 0;
       inventory = new int[]{1,2,-1};
       health = 100;
-      maps.clear();
-      for (int i = 0; i < 5; i++) {
-        maps.add(new int[1][1]);
-      }
+      maps = new Map[5];
       mapWidth = MAP_SIZES[0][0];
       mapHeight = MAP_SIZES[0][1];
       posX = int(random(4,mapWidth-5))-0.5;
       posY = int(random(5,mapHeight-6))-0.5;
-      maps.set(1, mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num));
+      maps[1] = new Map(mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num), mapGenerator.npcs, mapGenerator.pickups);
       for (int i = 0; i < textureTiles.length; i++) {
         textureTiles[i] = int(random(0, mapWidth*mapHeight));
       }
-      npcList = mapGenerator.getNPCs();
       level = 1;
       counter = -1;
     break;
@@ -477,27 +468,27 @@ void teleport(int num) {
       tileType = num-1;
       mapWidth = MAP_SIZES[num-1][0];
       mapHeight = MAP_SIZES[num-1][1];
-      if (maps.get(num).length <= 1) {
-        maps.set(num, mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, num));
+      if (maps[num] == null) {
+        maps[num] = new Map(mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, num), mapGenerator.npcs, mapGenerator.pickups);
         for (int i = 0; i < textureTiles.length; i++) {
           textureTiles[i] = int(random(0, mapWidth*mapHeight));
         }
-        npcList = mapGenerator.getNPCs();
       }
       posX = posX/1.25;
       posY = posY/1.25;
       level = num;
     break;
     case 4:
-      posX = 15;
-      posY = 10;
-      maps.set(4, mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-2, ceil(posY)+2, num));
+      mapWidth = MAP_SIZES[num-1][0];
+      mapHeight = MAP_SIZES[num-1][1];
+      posX = mapWidth/2;
+      posY = mapHeight/2;
+      maps[4] = new Map(mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num), new ArrayList<NPC>(0), new ArrayList<Pickup>(0));
       countDownActive = false;
       delayInt = millis();
       level = 4;
     break;	
   }
-  if (num > 0) activeMap = maps.get(num);
 }
 
 //SAVE INFO -------------------------
