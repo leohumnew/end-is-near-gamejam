@@ -19,16 +19,16 @@
     "UI": [
         "\"Save the Earth. Avoid the alien Tenshi.\"",
         "Locked...",
-        "UP",
-        "RIGHT",
-        "DOWN",
-        "LEFT",
+        "上へ",
+        "右へ",
+        "下へ",
+        "左へ",
         "Shoot",
         "Dig",
-        "SPACE to skip",
-        "SPACE to replay",
-        "Climb UP a level",
-        "Climb DOWN a level",
+        "スペースキーでスキップ",
+        "スペースキーで再スタート",
+        "一階へ上がる",
+        "一階へ下がる",
         "The ground is soft here... Maybe you could dig down a bit?"
     ]
 }
