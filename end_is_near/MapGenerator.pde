@@ -4,6 +4,8 @@ public class MapGenerator {
   ArrayList<NPC> npcs = new ArrayList<NPC>();
   ArrayList<Pickup> pickups = new ArrayList<Pickup>();
   int[][] map;
+  int[] upLoc = {0,0};
+  int[] downLoc = {0,0};
 
   // create array of 2d arrays of ints to store room templates
   final int[][][] roomTemplates =
@@ -108,7 +110,7 @@ public class MapGenerator {
     }
   };
   final int[][][] specialRoomTemplates = {
-    {
+    { // Light shaft
       {1,1,2,0,0,0,1,1},
       {1,2,0,0,0,0,0,1},
       {2,0,0,5,5,5,0,0},
@@ -118,7 +120,7 @@ public class MapGenerator {
       {1,1,2,0,0,0,1,1},
       {1,2,3}
     },
-    {
+    { // Key room
       {2,0,0,0,0,0,4,0,0,0,4,0,0,0,0,0},
       {2,0,3,3,0,0,4,0,0,0,4,0,0,3,3,0},
       {2,0,3,0,6,6,4,0,0,0,4,6,6,0,3,0},
@@ -136,13 +138,13 @@ public class MapGenerator {
       {2,0,0,0,0,0,4,0,0,0,4,0,0,0,0,0},
       {3}
     },
-    {
+    { // Door room
       {2,0,0,0},
       {8,0,0,0},
       {2,0,0,0},
-      {3}
+      {2}
     },
-    {
+    { // Floor hole room
       {1,2,0,0,1},
       {2,0,0,0,0},
       {2,0,10,10,0},
@@ -151,7 +153,7 @@ public class MapGenerator {
       {1,2,0,0,1},
       {1,2}
     },
-    {
+    { // Ship room
       {2,0,0,0,0,0,0,0,0,0,0,0,0},
       {2,0,0,1,1,1,1,1,1,1,1,0,0},
       {2,0,1,1,0,0,0,0,0,0,0,0,0},
@@ -191,10 +193,14 @@ public class MapGenerator {
       if (contains(specialRoomTemplates[i][specialRoomTemplates[i].length-1], newMapNum)) {
         int room = i;
         int x, y;
-
         if (room == 0 || room == 4) {
           x = startX;
           y = startY;
+        } else if (room == 3) {
+          do {
+            x = int(random(4, mapWidth-specialRoomTemplates[room].length-1));
+            y = int(random(4, mapHeight-specialRoomTemplates[room][0].length-1));
+          } while (overlapsOldRoom(x, y, specialRoomTemplates[room].length-1, specialRoomTemplates[room][0].length));
         } else {
           do {
             x = int(random(0, mapWidth-specialRoomTemplates[room].length-1));
@@ -214,8 +220,18 @@ public class MapGenerator {
               map[j][k] = 0;
               pickups.add(new Pickup(j, k, 0));
             } else map[j][k] = specialRoomTemplates[room][j-x][k-y];
-            if (map[j][k] == 8) {
+
+            if (map[j][k] == 8) { // Add door collider
               pickups.add(new Pickup(j, k+1, -1));
+            } else if (map[j][k] == 5) { // Light shaft message
+              pickups.add(new Pickup(j, k, -2));
+              upLoc[0] = j;
+              upLoc[1] = k;
+            } else if (map[j][k] == 10) { // Dig down location
+              downLoc[0] = j;
+              downLoc[1] = k;
+            } else if (map[j][k] == 11) { // Dig down message
+              pickups.add(new Pickup(j, k, -3));
             }
           }
         }

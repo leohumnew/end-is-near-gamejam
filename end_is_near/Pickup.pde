@@ -24,6 +24,10 @@ public class Pickup {
         else {
           banner(textUI[1]);
         }
+      } else if (item == -2) {
+        banner(textUI[10]);
+      } else if (item == -3) {
+        banner(textUI[11]);
       }
     }
   }

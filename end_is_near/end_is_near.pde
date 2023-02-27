@@ -34,7 +34,7 @@ int tileType;
 PImage[][] worldTiles = new PImage[3][16];
 
 PFont pixelatedFont;
-//PShader vignetteShader;
+// PShader vignetteShader;
 
 //Player variables
 final int TIME_LIMIT = 60000, MOV_SPEED = 4;
@@ -103,7 +103,7 @@ void load() {
   items[2] = loadImagePng("Item1.png", tileSize);
   items[3] = loadImagePng("Item6.png", tileSize);
   vignette = loadImagePng("Vig.png", width, height);
-  //vignetteShader = loadShader("Vignette.glsl");
+  // vignetteShader = loadShader("Vignette.glsl");
   UI[0] = loadImagePng("Frame1.png", tileSize/4, tileSize*4);
   UI[1] = loadImagePng("LifeFrame.png", tileSize, tileSize*2);
   introScreens[0] = loadImagePng("E2.png", width, height);
@@ -135,7 +135,9 @@ void draw() {
       changeScene(-3);
     }
     move();
+    // shader(vignetteShader);
     drawMap();
+    // resetShader();
     for (int i = 0; i < bulletList.size(); i++) {
       bulletList.get(i).update();
     }
@@ -143,7 +145,6 @@ void draw() {
     maps[level].updateItems();
     drawPlayer();
     image(vignette, 0, 0);
-    //shader(vignetteShader);
     drawUI();
   } else if (level == -1) {
     image(loading, width-tileSize*8, height-tileSize*4);
@@ -239,6 +240,11 @@ void keyPressed() {
     } else if (key == 'd' || key == 'D' || keyCode == RIGHT) {
       pressedKeys[3] = true;
       speedX = 1;
+    } else if (key == 'q' || key == 'Q') {
+      shoot();
+    } else if (key == 'e' || key == 'E') {
+      if (getMapPos(posX, posY) == 5 && level > 1) changeScene(level-1);
+      else if (getMapPos(posX, posY) == 11 && level < 3) changeScene(level+1);
     }
   } else if (level == -3) {
     if (key == ' ') {
@@ -305,16 +311,19 @@ void dig() {
     }
   } else if (getMapPos(posX, posY) == 10 && level > 0 && level < 3) {
     if (digSound != null && !digSound.isPlaying()) digSound.play();
-    //setMapPos(posX, posY, 11);
+    setMapPos(posX, posY, 11);
     changeScene(level+1);
   }
 }
 
 //Shoot
+void shoot() {
+  if(shoot != null)shoot.play();
+  bulletList.add(new Bullet(posX+0.3, posY+0.4, 0.1, atan2(mouseY-height/2,mouseX-width/2), true));
+}
 void mousePressed() {
   if (mouseButton == LEFT && level > 0) {
-    if(shoot != null)shoot.play();
-    bulletList.add(new Bullet(posX+0.3, posY+0.4, 0.1, atan2(mouseY-height/2,mouseX-width/2), true));
+    shoot();
   }
 }
 
@@ -368,6 +377,7 @@ void drawMap() {
         tilePosY = (j-8)*tileSize-posY*tileSize+height/2;
         image(ship, tilePosX, tilePosY);
       } else if (currentTile == 10) image(worldTiles[tileType][11], tilePosX, tilePosY); //Diggable floor
+      else if (currentTile == 11) image(worldTiles[tileType][15], tilePosX, tilePosY); //Dug floor
       
       i = iOriginal;
       j = jOriginal;
@@ -454,11 +464,17 @@ void teleport(int num) {
       maps = new Map[5];
       mapWidth = MAP_SIZES[0][0];
       mapHeight = MAP_SIZES[0][1];
-      posX = int(random(4,mapWidth-5))-0.5;
-      posY = int(random(5,mapHeight-6))-0.5;
-      maps[1] = new Map(mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num), mapGenerator.npcs, mapGenerator.pickups);
-      for (int i = 0; i < textureTiles.length; i++) {
-        textureTiles[i] = int(random(0, mapWidth*mapHeight));
+      if (maps[1] == null) {
+        posX = int(random(4,mapWidth-5))-0.5;
+        posY = int(random(5,mapHeight-6))-0.5;
+        maps[1] = new Map(mapGenerator.mapGenerate(7, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num), mapGenerator.npcs, mapGenerator.pickups, mapGenerator.upLoc, mapGenerator.downLoc);
+        for (int i = 0; i < textureTiles.length; i++) {
+          textureTiles[i] = int(random(0, mapWidth*mapHeight));
+        }
+      }
+      if (level > num && level >= 0) {
+        posX = maps[num].downLoc[0]-0.5;
+        posY = maps[num].downLoc[1]-0.5;
       }
       level = 1;
       counter = -1;
@@ -469,13 +485,18 @@ void teleport(int num) {
       mapWidth = MAP_SIZES[num-1][0];
       mapHeight = MAP_SIZES[num-1][1];
       if (maps[num] == null) {
-        maps[num] = new Map(mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, num), mapGenerator.npcs, mapGenerator.pickups);
+        maps[num] = new Map(mapGenerator.mapGenerate(4, mapWidth, mapHeight, ceil(posX/1.25)-4, ceil(posY/1.25)-5, num), mapGenerator.npcs, mapGenerator.pickups, mapGenerator.upLoc, mapGenerator.downLoc);
         for (int i = 0; i < textureTiles.length; i++) {
           textureTiles[i] = int(random(0, mapWidth*mapHeight));
         }
       }
-      posX = posX/1.25;
-      posY = posY/1.25;
+      if (level < num) {
+        posX = maps[num].upLoc[0]-0.5;
+        posY = maps[num].upLoc[1]-0.5;
+      } else {
+        posX = maps[num].downLoc[0]-0.5;
+        posY = maps[num].downLoc[1]-0.5;
+      }
       level = num;
     break;
     case 4:
@@ -483,7 +504,7 @@ void teleport(int num) {
       mapHeight = MAP_SIZES[num-1][1];
       posX = mapWidth/2;
       posY = mapHeight/2;
-      maps[4] = new Map(mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num), new ArrayList<NPC>(0), new ArrayList<Pickup>(0));
+      maps[4] = new Map(mapGenerator.mapGenerate(0, mapWidth, mapHeight, ceil(posX)-4, ceil(posY)-5, num), new ArrayList<NPC>(0), new ArrayList<Pickup>(0), mapGenerator.upLoc, mapGenerator.downLoc);
       countDownActive = false;
       delayInt = millis();
       level = 4;
